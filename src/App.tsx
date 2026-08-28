@@ -2,9 +2,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import ProtectedRoute from './routes/ProtectedRoute';
+import Dashboard from './pages/Dashboard';
 
 function DashboardTemporal() {
-  return <h1 className="text-3xl font-bold p-8">Dashboard (en construcción)</h1>;
+  return <Dashboard></Dashboard>
 }
 
 function App() {
