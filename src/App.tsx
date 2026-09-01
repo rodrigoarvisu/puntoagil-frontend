@@ -3,10 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
-
-function DashboardTemporal() {
-  return <Dashboard></Dashboard>
-}
+import Productos from './pages/Productos';   
+import Categorias from './pages/Categorias';
+import Proveedores from './pages/Proveedores';
 
 function App() {
   return (
@@ -17,10 +16,35 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardTemporal />
+              <Dashboard />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/productos"
+          element={
+            <ProtectedRoute>
+              <Productos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/categorias"
+          element={
+            <ProtectedRoute>
+              <Categorias />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/proveedores"
+          element={
+            <ProtectedRoute>
+              <Proveedores />
+            </ProtectedRoute>
+          }
+        />
+        {/* <-- 2. agrega este bloque, mismo patrón que /dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

@@ -7,6 +7,7 @@ export interface Categoria {
 export interface Producto {
   id: number;
   nombre: string;
+  codigoBarras?: string;
   categoria: Categoria;
   costo: number;
   precioVenta: number;
