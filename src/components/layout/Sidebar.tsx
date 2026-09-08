@@ -14,7 +14,7 @@ interface NavSection {
 }
 
 const secciones: NavSection[] = [
-  { items: [{ label: 'Dashboard', path: '/dashboard' }] },
+  { items: [{ label: 'Dashboard', path: '/dashboard' }], soloAdmin: true },
   {
     title: 'Ventas',
     items: [
@@ -42,9 +42,7 @@ const secciones: NavSection[] = [
     title: 'Reportes',
     soloAdmin: true,
     items: [
-      { label: 'Ventas', path: '/reportes/ventas' },
-      { label: 'Compras', path: '/reportes/compras' },
-      { label: 'Utilidades', path: '/reportes/utilidades' },
+      { label: 'Reportes', path: '/reportes' }
     ],
   },
   {
@@ -78,6 +76,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === '/compras' || item.path === '/ventas'}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-5 py-2.5 text-sm transition ${
                     isActive

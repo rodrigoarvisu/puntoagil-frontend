@@ -43,6 +43,7 @@ export interface Venta {
   fecha?: string;
   total?: number;
   detalles: DetalleVenta[];
+  metodoPago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
 }
 
 export interface DetalleCompra {
