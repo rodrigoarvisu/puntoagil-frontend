@@ -107,6 +107,7 @@ export default function Login() {
                 required
                 placeholder="tucorreo@tienda.com"
                 className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition text-sm"
+                autoFocus 
               />
             </div>
 

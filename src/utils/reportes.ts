@@ -121,3 +121,43 @@ export function esHoy(fecha?: string) {
   const hoyLocal = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
   return fecha.slice(0, 10) === hoyLocal;
 }
+
+export function utilidadDeVenta(v: Venta): number {
+  let utilidad = 0;
+  v.detalles.forEach((d) => {
+    const costo = (d.producto as any).costo ?? 0;
+    const subtotal = d.subtotal ?? d.cantidad * d.precioUnitario;
+
+    utilidad += subtotal - costo * d.cantidad;
+  });
+  return utilidad;
+}
+
+export function serieUltimosNDias<T extends { fecha?: string }>(
+  items: T[],
+  dias: number,
+  obtenerValor: (item: T) => number
+): { fecha: string; valor: number }[] {
+  const resultado: { fecha: string; valor: number }[] = [];
+
+  const hoy = new Date();
+
+  for (let i = dias - 1; i >= 0; i--) {
+    const fecha = new Date(hoy);
+    fecha.setDate(hoy.getDate() - i);
+
+    const fechaTexto = `${fecha.getFullYear()}-${String(
+      fecha.getMonth() + 1
+    ).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+
+    const valor = items
+      .filter((item) => item.fecha?.slice(0, 10) === fechaTexto)
+      .reduce((total, item) => total + obtenerValor(item), 0);
+
+    resultado.push({
+      fecha: fechaTexto,
+      valor,
+    });
+  }
+  return resultado;
+}
