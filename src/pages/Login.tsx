@@ -4,11 +4,13 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import type { Usuario } from '../types';
 import logo from '../assets/logo.puntoagil.png';
+import pos from '../assets/0000.webp';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [recordarme, setRecordarme] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -23,7 +25,7 @@ export default function Login() {
     try {
       const loginResponse = await api.post('/auth/login', { email, password });
       const { token, id, nombre, rol } = loginResponse.data;
-      const usuario: Usuario = { id, nombre, email, rol};
+      const usuario: Usuario = { id, nombre, email, rol };
       login(token, usuario);
       navigate('/dashboard');
     } catch (err) {
@@ -35,30 +37,44 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      {/* Panel de marca */}
+      {/* Panel de marca (sin cambios respecto a la versión anterior) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-[#0F1E3D] overflow-hidden flex-col justify-between p-12">
-        {/* Marca de agua / Patrón sutil de fondo */}
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none flex items-center justify-center -rotate-12 scale-125">
-          <div className="flex gap-2">
-            {Array.from({ length: 50 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-full"
-                style={{
-                  width: [2, 4, 2, 6, 2, 3, 5][i % 7] * 2,
-                  height: '120vh',
-                }}
-              />
-            ))}
-          </div>
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -left-20 w-[500px] h-[500px] bg-blue-600/30 rounded-full blur-[120px] animate-aurora-1" />
+          <div className="absolute top-1/3 -right-32 w-[450px] h-[450px] bg-sky-500/25 rounded-full blur-[130px] animate-aurora-2" />
+          <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[110px] animate-aurora-3" />
         </div>
 
-        
+        <div
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute rounded-full bg-white/40 animate-particle"
+              style={{
+                width: `${2 + (i % 3)}px`,
+                height: `${2 + (i % 3)}px`,
+                left: `${(i * 37) % 100}%`,
+                top: `${(i * 53) % 100}%`,
+                animationDelay: `${i * 0.6}s`,
+                animationDuration: `${6 + (i % 5)}s`,
+              }}
+            />
+          ))}
+        </div>
+
         <div className="relative z-10">
           <img src={logo} alt="PuntoÁgil" className="h-30 w-auto brightness-0 invert" />
         </div>
 
-        
         <div className="relative z-10 max-w-lg">
           <h2 className="text-white text-4xl font-bold leading-tight tracking-tight">
             Cada venta, cada compra, cada peso, bajo control.
@@ -69,16 +85,60 @@ export default function Login() {
           </p>
         </div>
 
-        
+        <div className="relative z-10 flex justify-center items-end -mb-12 mt-8" style={{ perspective: '1000px' }}>
+          <div className="absolute bottom-10 w-[420px] h-[420px] bg-blue-500/30 rounded-full blur-[100px] pointer-events-none animate-pulse-slow" />
+          <div className="absolute bottom-16 w-[240px] h-[180px] bg-sky-400/25 rounded-full blur-[70px] pointer-events-none" />
+          <div className="relative w-[90%] max-w-md animate-float">
+            <img
+              src={pos}
+              alt="PuntoÁgil"
+              className="w-full drop-shadow-[0_35px_45px_rgba(0,0,0,0.55)]"
+              style={{
+                maskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none animate-shine"
+              style={{
+                background:
+                  'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0.05) 55%, transparent 70%)',
+                maskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
+              }}
+            />
+          </div>
+        </div>
+
         <p className="text-blue-300/40 text-xs relative z-10">
           © {new Date().getFullYear()} PuntoÁgil POS. Todos los derechos reservados.
         </p>
       </div>
 
-      
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-2xl shadow-sm border border-slate-100">
+      {/* Panel de formulario — rediseñado */}
+      <div className="flex-1 relative flex items-center justify-center p-6 sm:p-12 overflow-hidden">
+        {/* Acentos de fondo suaves, para que no se vea plano */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-100 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-32 -left-16 w-80 h-80 bg-indigo-50 rounded-full blur-[90px] pointer-events-none" />
+        <div
+          className="absolute inset-0 opacity-[0.4] pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+            maskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 75%)',
+          }}
+        />
+
+        <div className="relative w-full max-w-md bg-white/90 backdrop-blur-sm p-8 sm:p-10 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100">
           <img src={logo} alt="PuntoÁgil" className="h-20 mx-auto mb-8 lg:hidden" />
+
+          {/* Icono insignia arriba del título */}
+          <div className="w-12 h-12 rounded-xl bg-blue-80 flex items-center justify-center mb-5">
+            <svg className="w-6 h-6 text-[#1D4ED8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+            </svg>
+          </div>
 
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
@@ -91,38 +151,47 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100">
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="tucorreo@tienda.com"
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition text-sm"
-                autoFocus 
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+              <div className="relative">
+                <svg className="w-4.5 h-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="tucorreo@gmail.com"
+                  className="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition text-sm"
+                  autoFocus
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Contraseña
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-700">Contraseña</label>
+              </div>
               <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" style={{ width: 18, height: 18 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
                 <input
                   type={mostrarPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full border border-slate-200 rounded-xl pl-4 pr-11 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition text-sm"
+                  className="w-full border border-slate-200 rounded-xl pl-10 pr-11 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition text-sm"
                 />
                 <button
                   type="button"
@@ -147,9 +216,24 @@ export default function Login() {
             <button
               type="submit"
               disabled={cargando}
-              className="w-full bg-[#1D4ED8] text-white py-3 rounded-xl font-medium hover:bg-[#1a44c0] active:scale-[0.99] disabled:opacity-50 transition shadow-sm shadow-[#1D4ED8]/20 mt-2"
+              className="w-full bg-[#1D4ED8] text-white py-3 rounded-xl font-medium hover:bg-[#1a44c0] active:scale-[0.99] disabled:opacity-50 transition shadow-lg shadow-[#1D4ED8]/25 mt-2 flex items-center justify-center gap-2"
             >
-              {cargando ? 'Ingresando...' : 'Iniciar sesión'}
+              {cargando ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  Ingresando...
+                </>
+              ) : (
+                <>
+                  Iniciar sesión
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </>
+              )}
             </button>
           </form>
         </div>
