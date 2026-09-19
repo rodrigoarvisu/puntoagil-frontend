@@ -208,7 +208,7 @@ export default function NuevaVenta() {
                   }
                  }
                 }}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                   autoFocus
                 />
                 {mostrarSugerencias && sugerencias.length > 0 && (
@@ -238,7 +238,7 @@ export default function NuevaVenta() {
                   min={1}
                   value={cantidad}
                   onChange={(e) => setCantidad(Number(e.target.value))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 />
               </div>
               <div className="col-span-2">
@@ -249,7 +249,7 @@ export default function NuevaVenta() {
                   min={0}
                   value={precioUnitario}
                   onChange={(e) => setPrecioUnitario(Number(e.target.value))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 />
               </div>
               <div className="col-span-2">
@@ -371,7 +371,7 @@ export default function NuevaVenta() {
       min={0}
       value={dineroRecibido}
       onChange={(e) => setDineroRecibido(Number(e.target.value))}
-      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+      className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
     />
     {dineroRecibido > 0 && (
       <p className={`text-sm mt-1.5 font-medium ${cambio >= 0 ? 'text-green-600' : 'text-red-500'}`}>

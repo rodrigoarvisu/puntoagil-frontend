@@ -19,6 +19,9 @@ interface LineaCarrito {
 
 const notyf = new Notyf();
 
+const inputClass =
+  'border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
+
 export default function NuevaCompra() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
@@ -50,16 +53,22 @@ export default function NuevaCompra() {
     setMostrarSugerencias(false);
   };
 
-  const agregarAlCarrito = () => {
-    if (!productoSeleccionado || cantidad <= 0 || costoUnitario < 0) return;
+  const limpiarFormulario = () => {
+    setProductoSeleccionado(null);
+    setBusquedaProducto('');
+    setMostrarSugerencias(false);
+    setCantidad(1);
+    setCostoUnitario(0);
+  };
 
+  const agregarLinea = (producto: Producto, cant: number, costo: number) => {
     setCarrito((prev) => {
-      const existente = prev.find((l) => l.productoId === productoSeleccionado.id);
+      const existe = prev.some((l) => l.productoId === producto.id);
 
-      if (existente) {
+      if (existe) {
         return prev.map((l) =>
-          l.productoId === productoSeleccionado.id
-            ? { ...l, cantidad: l.cantidad + cantidad, costoUnitario }
+          l.productoId === producto.id
+            ? { ...l, cantidad: l.cantidad + cant, costoUnitario: costo }
             : l
         );
       }
@@ -67,34 +76,47 @@ export default function NuevaCompra() {
       return [
         ...prev,
         {
-          productoId: productoSeleccionado.id,
-          nombre: productoSeleccionado.nombre,
-          cantidad,
-          costoUnitario
-        }
+          productoId: producto.id,
+          nombre: producto.nombre,
+          cantidad: cant,
+          costoUnitario: costo,
+        },
       ];
     });
+  };
 
-    setProductoSeleccionado(null);
-    setBusquedaProducto('');
-    setCantidad(1);
-    setCostoUnitario(0);
+  const agregarAlCarrito = () => {
+    if (!productoSeleccionado || cantidad <= 0 || costoUnitario < 0) return;
+
+    agregarLinea(productoSeleccionado, cantidad, costoUnitario);
+    limpiarFormulario();
+  };
+
+  const agregarPorCodigoBarras = (codigo: string) => {
+    const producto = productos.find((p) => p.codigoBarras === codigo);
+
+    if (!producto) {
+      notyf.error({
+        message: 'No se encontró ningún producto con ese código.',
+        duration: 3000,
+      });
+      return;
+    }
+
+    agregarLinea(producto, 1, producto.costo);
+    limpiarFormulario();
   };
 
   const quitarLinea = (productoId: number) => {
     setCarrito((prev) => prev.filter((l) => l.productoId !== productoId));
   };
 
-  const total = carrito.reduce(
-    (acc, l) => acc + l.cantidad * l.costoUnitario,
-    0
-  );
+  const total = carrito.reduce((acc, l) => acc + l.cantidad * l.costoUnitario, 0);
 
   const sugerencias = busquedaProducto.trim()
     ? productos
         .filter((p) => {
           const q = busquedaProducto.toLowerCase();
-
           return (
             p.nombre.toLowerCase().includes(q) ||
             p.codigoBarras?.toLowerCase().includes(q)
@@ -132,14 +154,14 @@ export default function NuevaCompra() {
 
       notyf.success({
         message: 'Compra registrada correctamente.',
-        duration: 3000
+        duration: 3000,
       });
 
       navigate('/compras');
     } catch {
       notyf.error({
         message: 'No se pudo registrar la compra.',
-        duration: 4000
+        duration: 4000,
       });
     } finally {
       setGuardando(false);
@@ -158,7 +180,7 @@ export default function NuevaCompra() {
             <select
               value={proveedorId}
               onChange={(e) => setProveedorId(Number(e.target.value))}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-4 bg-[#F1F5F9]"
+              className={inputClass}
             >
               <option value="">Selecciona proveedor</option>
 
@@ -169,7 +191,7 @@ export default function NuevaCompra() {
               ))}
             </select>
 
-            <div className="grid grid-cols-12 gap-3 items-end">
+            <div className="grid grid-cols-12 gap-3 items-end mt-4">
               <div className="col-span-5 relative">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Producto
@@ -185,10 +207,18 @@ export default function NuevaCompra() {
                     setMostrarSugerencias(true);
                   }}
                   onFocus={() => setMostrarSugerencias(true)}
-                  onBlur={() =>
-                    setTimeout(() => setMostrarSugerencias(false), 150)
-                  }
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (productoSeleccionado) {
+                        agregarAlCarrito();
+                      } else if (busquedaProducto.trim()) {
+                        agregarPorCodigoBarras(busquedaProducto.trim());
+                      }
+                    }
+                  }}
+                  className={inputClass}
                 />
 
                 {mostrarSugerencias && sugerencias.length > 0 && (
@@ -199,14 +229,10 @@ export default function NuevaCompra() {
                         onMouseDown={() => seleccionarProducto(p)}
                         className="px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer flex justify-between"
                       >
-                        <span className="text-slate-800">
-                          {p.nombre}
-                        </span>
+                        <span className="text-slate-800">{p.nombre}</span>
 
                         <span className="text-slate-400 text-xs">
-                          {p.codigoBarras
-                            ? `#${p.codigoBarras}`
-                            : `Stock: ${p.stock}`}
+                          {p.codigoBarras ? `#${p.codigoBarras}` : `Stock: ${p.stock}`}
                         </span>
                       </li>
                     ))}
@@ -224,7 +250,7 @@ export default function NuevaCompra() {
                   min={1}
                   value={cantidad}
                   onChange={(e) => setCantidad(Number(e.target.value))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  className={inputClass}
                 />
               </div>
 
@@ -239,7 +265,7 @@ export default function NuevaCompra() {
                   min={0}
                   value={costoUnitario}
                   onChange={(e) => setCostoUnitario(Number(e.target.value))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                  className={inputClass}
                 />
               </div>
 
@@ -270,26 +296,16 @@ export default function NuevaCompra() {
               <tbody>
                 {carrito.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-6 text-center text-slate-400"
-                    >
+                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                       Aún no has agregado productos
                     </td>
                   </tr>
                 ) : (
                   carrito.map((l) => (
-                    <tr
-                      key={l.productoId}
-                      className="border-t border-slate-100"
-                    >
-                      <td className="px-4 py-3 font-medium text-slate-800">
-                        {l.nombre}
-                      </td>
+                    <tr key={l.productoId} className="border-t border-slate-100">
+                      <td className="px-4 py-3 font-medium text-slate-800">{l.nombre}</td>
 
-                      <td className="px-4 py-3 text-slate-600">
-                        {l.cantidad}
-                      </td>
+                      <td className="px-4 py-3 text-slate-600">{l.cantidad}</td>
 
                       <td className="px-4 py-3 text-slate-600">
                         ${l.costoUnitario.toFixed(2)}
@@ -316,9 +332,7 @@ export default function NuevaCompra() {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 h-fit sticky top-20">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">
-            Resumen
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">Resumen</h3>
 
           <div className="flex justify-between text-sm text-slate-600 mb-2">
             <span>Productos</span>

@@ -13,6 +13,7 @@ import Ventas from './pages/Ventas';
 import CorteCajaPage from './pages/CorteCaja';
 import Reportes from './pages/Reportes';
 import { useAuth } from './context/AuthContext';
+import Configuracion from './pages/Configuracion';
 
 function App() {
   return (
@@ -96,6 +97,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Reportes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/configuracion"
+          element={
+            <ProtectedRoute>
+              <Configuracion />
             </ProtectedRoute>
           }
         />

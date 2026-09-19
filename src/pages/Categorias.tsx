@@ -152,7 +152,7 @@ export default function Categorias() {
                 placeholder="Ingresa el nombre de la categoría"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 autoFocus
               />
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -162,7 +162,7 @@ export default function Categorias() {
                 placeholder="Ingresa una breve descripción (opcional)"
                 value={form.descripcion}
                 onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 rows={3}
               />
               <div className="flex justify-end gap-2 pt-2">

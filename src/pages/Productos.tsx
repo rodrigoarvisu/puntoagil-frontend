@@ -228,7 +228,7 @@ export default function Productos() {
                 placeholder="Escanea o escribe el código de barras"
                 value={form.codigoBarras}
                 onChange={(e) => setForm({ ...form, codigoBarras: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 autoFocus
               />
              <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -239,7 +239,7 @@ export default function Productos() {
                 placeholder="Ingresa el nombre del producto"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
               />
                <label className="block text-sm font-medium text-slate-700 mb-1.5">
                         Categoría
@@ -248,7 +248,7 @@ export default function Productos() {
                 required
                 value={form.categoriaId}
                 onChange={(e) => setForm({ ...form, categoriaId: Number(e.target.value) })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
               >
                 <option value="">Selecciona categoría</option>
                 {categorias.map((c) => (
@@ -269,7 +269,7 @@ export default function Productos() {
                         onChange={(e) =>
                            setForm({ ...form, costo: Number(e.target.value) })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                        className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                     />
                 </div>
                 <div>
@@ -285,7 +285,7 @@ export default function Productos() {
                         onChange={(e) =>
                            setForm({ ...form, precioVenta: Number(e.target.value) })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                        className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                     />
                 </div>
                 <div>
@@ -301,7 +301,7 @@ export default function Productos() {
                         onChange={(e) =>
                            setForm({ ...form, stock: Number(e.target.value) })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                        className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                     />
                 </div>
                 <div>
@@ -317,7 +317,7 @@ export default function Productos() {
                         onChange={(e) =>
                            setForm({ ...form, stockMinimo: Number(e.target.value) })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-[#F1F5F9]"
+                        className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                     />
                 </div>
               </div>

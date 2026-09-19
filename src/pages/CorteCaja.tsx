@@ -155,7 +155,7 @@ export default function CorteCajaPage() {
                 <tr
                   key={c.id}
                   onClick={() => setCorteSeleccionado(c)}
-                  className="border-t border-slate-100 cursor-pointer hover:bg-slate-50 transition"
+                  className="border-t border-slate-100 cursor-pointer hover:bg-[#F1F5F9] transition"
                 >
                   <td className="px-4 py-3 text-slate-600">
                     {c.fecha ? new Date(c.fecha).toLocaleString('es-MX') : '—'}
@@ -196,7 +196,7 @@ export default function CorteCajaPage() {
                   autoFocus
                   value={efectivoContado}
                   onChange={(e) => setEfectivoContado(Number(e.target.value))}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
