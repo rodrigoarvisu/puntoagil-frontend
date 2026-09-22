@@ -180,6 +180,7 @@ export default function TabUsuarios() {
                   placeholder='Ingresa el nombre del usuario'
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   className={inputClass}
+                  autoFocus
                 />
               </div>
               <div>

@@ -27,7 +27,7 @@ export default function Login() {
       const { token, id, nombre, rol } = loginResponse.data;
       const usuario: Usuario = { id, nombre, email, rol };
       login(token, usuario);
-      navigate('/dashboard');
+      navigate(rol === 'ADMIN' ? '/dashboard' : '/ventas/nueva');
     } catch (err) {
       setError('Email o contraseña incorrectos');
     } finally {
@@ -94,7 +94,7 @@ export default function Login() {
               alt="PuntoÁgil"
               className="w-full drop-shadow-[0_35px_45px_rgba(0,0,0,0.55)]"
               style={{
-                maskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
                 WebkitMaskImage: 'linear-gradient(to bottom, black 82%, transparent 100%)',
               }}
             />

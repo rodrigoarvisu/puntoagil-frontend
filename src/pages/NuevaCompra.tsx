@@ -172,7 +172,7 @@ export default function NuevaCompra() {
     <MainLayout titulo="Nueva Compra">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="bg-white rounded-xl border border-[#0F1E3D] p-5">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Proveedor
             </label>
@@ -219,6 +219,7 @@ export default function NuevaCompra() {
                     }
                   }}
                   className={inputClass}
+                  autoFocus
                 />
 
                 {mostrarSugerencias && sugerencias.length > 0 && (
@@ -281,7 +282,7 @@ export default function NuevaCompra() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-[#0F1E3D] text-white text-left">
                 <tr>
@@ -302,7 +303,7 @@ export default function NuevaCompra() {
                   </tr>
                 ) : (
                   carrito.map((l) => (
-                    <tr key={l.productoId} className="border-t border-slate-100">
+                    <tr key={l.productoId} className="border-t border-slate-200">
                       <td className="px-4 py-3 font-medium text-slate-800">{l.nombre}</td>
 
                       <td className="px-4 py-3 text-slate-600">{l.cantidad}</td>
@@ -331,7 +332,7 @@ export default function NuevaCompra() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5 h-fit sticky top-20">
+        <div className="bg-white rounded-xl border border-[#0F1E3D] p-5 h-fit sticky top-20">
           <h3 className="text-lg font-semibold text-slate-800 mb-4">Resumen</h3>
 
           <div className="flex justify-between text-sm text-slate-600 mb-2">
@@ -339,7 +340,7 @@ export default function NuevaCompra() {
             <span>{carrito.length}</span>
           </div>
 
-          <div className="flex justify-between text-lg font-bold text-slate-800 border-t border-slate-100 pt-3 mt-3">
+          <div className="flex justify-between text-lg font-bold text-slate-800 border-t border-[#0F1E3D] pt-3 mt-3">
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
