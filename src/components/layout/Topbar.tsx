@@ -34,7 +34,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
   });
 
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
+    <header className="h-16 bg-white/80 backdrop-blur-sm border border-slate-100 flex items-center justify-between px-6 sticky top-0 z-20">
       <div>
         <h1 className="text-lg font-semibold text-slate-800 leading-tight">{titulo}</h1>
         <p className="text-xs text-slate-400 capitalize hidden sm:block">{fechaHoy}</p>
@@ -53,7 +53,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
         </button>
 
         {/* Separador */}
-        <div className="w-px h-8 bg-slate-200" />
+        <div className="w-px h-8 bg-slate-200 border border-[#0F1E3D]" />
 
         {/* Menú de usuario */}
         <div className="relative" ref={menuRef}>
@@ -91,8 +91,8 @@ export default function Topbar({ titulo }: { titulo: string }) {
 
           {/* Dropdown */}
           {menuAbierto && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg shadow-slate-200/80 border border-slate-100 py-2 animate-dropdown">
-              <div className="px-4 py-2.5 border-b border-slate-100">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg shadow-slate-200/80 border border-slate-400 py-2 animate-dropdown">
+              <div className="px-4 py-2.5 border-b border-slate-400">
                 <p className="text-sm font-medium text-slate-800">{usuario?.nombre}</p>
                 <p className="text-xs text-slate-400">{usuario?.email}</p>
               </div>

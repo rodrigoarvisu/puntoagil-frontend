@@ -6,6 +6,7 @@ import MainLayout from '../components/layout/MainLayout';
 import { productosApi } from '../api/productos';
 import { categoriasApi } from '../api/categorias';
 import type { Producto, Categoria } from '../types';
+import { GooeyInput } from '@/components/ui/gooey-input';
 
 
 const notyf = new Notyf();
@@ -151,13 +152,20 @@ export default function Productos() {
     <MainLayout titulo="Productos">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-slate-800">Inventario de productos</h2>
-        <input
-            type="text"
-            placeholder="Buscar por nombre o escanear código de barras..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
-          />
+        <GooeyInput
+         placeholder="Buscar producto o escanear código de barras"
+         value={busqueda}
+         onValueChange={setBusqueda}
+         autoFocus
+         collapsedWidth={115}
+         expandedWidth={350}
+         classNames={{ 
+           trigger: "!bg-[#E6EDFD] !text-slate-600 !ring-1 !ring-slate-200 !shadow-none",
+           bubbleSurface: "!bg-[#E6EDFD] !text-slate-600 !ring-slate-200",
+           input: "!text-slate-800 placeholder:!text-slate-600",
+          }}
+          
+        />
         <button
           onClick={abrirCrear}
           className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition"

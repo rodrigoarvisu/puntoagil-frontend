@@ -124,7 +124,7 @@ export default function Compras() {
               <button
                 onClick={() => irAPagina(paginaActual - 1)}
                 disabled={paginaActual === 1}
-                className="px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Anterior
               </button>
@@ -137,7 +137,7 @@ export default function Compras() {
               <button
                 onClick={() => irAPagina(paginaActual + 1)}
                 disabled={paginaActual === totalPaginas}
-                className="px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition"
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Siguiente
               </button>

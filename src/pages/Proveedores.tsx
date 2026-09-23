@@ -9,6 +9,9 @@ import type { Proveedor } from '../types';
 const formVacio = { nombre: '', telefono: '', email: '' };
 const notyf = new Notyf();
 
+const inputClass = 
+'border border-slate-200 bg-[#E6EDFD] rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
+
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -16,6 +19,9 @@ export default function Proveedores() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [form, setForm] = useState(formVacio);
   const [error, setError] = useState('');
+
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
 
   const cargarDatos = async () => {
     setCargando(true);
@@ -32,6 +38,20 @@ export default function Proveedores() {
   useEffect(() => {
     cargarDatos();
   }, []);
+
+
+   useEffect(() => {
+    setPaginaActual(1);
+  }, [proveedores.length, registrosPorPagina]);
+
+  const totalPaginas = Math.max(1, Math.ceil(proveedores.length / registrosPorPagina));
+  const indiceInicio = (paginaActual - 1) * registrosPorPagina;
+  const proveedoresPagina = proveedores.slice(indiceInicio, indiceInicio + registrosPorPagina);
+
+  const irAPagina = (pagina: number) => {
+    if (pagina < 1 || pagina > totalPaginas) return;
+    setPaginaActual(pagina);
+  };
 
   const abrirCrear = () => {
     setEditandoId(null);
@@ -89,7 +109,7 @@ export default function Proveedores() {
     }
   };
 
-  return (
+   return (
     <MainLayout titulo="Proveedores">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-slate-800">Proveedores</h2>
@@ -105,7 +125,7 @@ export default function Proveedores() {
         <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[#0F1E3D] text-white text-left">
             <tr>
@@ -121,8 +141,8 @@ export default function Proveedores() {
             ) : proveedores.length === 0 ? (
               <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Sin proveedores registrados</td></tr>
             ) : (
-              proveedores.map((p) => (
-                <tr key={p.id} className="border-t border-slate-100">
+              proveedoresPagina.map((p) => (
+                <tr key={p.id} className="border-t border-slate-300">
                   <td className="px-4 py-3 font-medium text-slate-800">{p.nombre}</td>
                   <td className="px-4 py-3 text-slate-600">{p.telefono || '—'}</td>
                   <td className="px-4 py-3 text-slate-600">{p.email || '—'}</td>
@@ -135,6 +155,52 @@ export default function Proveedores() {
             )}
           </tbody>
         </table>
+
+        {/* --- Controles de paginación --- */}
+        {!cargando && proveedores.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-500 bg-slate-50">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>Mostrar</span>
+              <select
+                value={registrosPorPagina}
+                onChange={(e) => setRegistrosPorPagina(Number(e.target.value))}
+                className={inputClass}
+              >
+                {[10, 20, 30, 50].map((opcion) => (
+                  <option key={opcion} value={opcion}>{opcion}</option>
+                ))}
+              </select>
+              <span>registros por página</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-sm">
+              <button
+                onClick={() => irAPagina(paginaActual - 1)}
+                disabled={paginaActual === 1}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+
+              <span className="px-3 text-slate-600">
+                Página <span className="font-medium text-slate-800">{paginaActual}</span> de{' '}
+                <span className="font-medium text-slate-800">{totalPaginas}</span>
+              </span>
+
+              <button
+                onClick={() => irAPagina(paginaActual + 1)}
+                disabled={paginaActual === totalPaginas}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+
+            <div className="text-sm text-slate-500">
+              Mostrando {indiceInicio + 1}–{Math.min(indiceInicio + registrosPorPagina, proveedores.length)} de {proveedores.length}
+            </div>
+          </div>
+        )}
       </div>
 
       {modalAbierto && (
