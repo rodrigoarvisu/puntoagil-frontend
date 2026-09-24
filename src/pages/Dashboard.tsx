@@ -76,6 +76,7 @@ export default function Dashboard() {
               serie={serieVentas}
               colorFondo="bg-blue-50" colorIcono="text-blue-600" colorLinea="#1D4ED8"
               icono="carrito"
+              className="border border-blue-200"
             />
             <CardResumen
               titulo="Utilidad del día"
@@ -85,26 +86,27 @@ export default function Dashboard() {
               serie={serieUtilidad}
               colorFondo="bg-green-50" colorIcono="text-green-600" colorLinea="#059669"
               icono="dinero"
+              className="border border-green-200"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <CardAlerta titulo="Agotados" cantidad={agotados.length} colorFondo="bg-red-50" colorBorde="border-red-100" colorTexto="text-red-600" onClick={() => setModalStock('agotados')} />
-            <CardAlerta titulo="Por agotarse" cantidad={porAgotarse.length} colorFondo="bg-amber-50" colorBorde="border-amber-100" colorTexto="text-amber-600" onClick={() => setModalStock('poragotarse')} />
-            <CardAlerta titulo="Todos registrados" cantidad={productos.length} colorFondo="bg-blue-50" colorBorde="border-blue-100" colorTexto="text-blue-600" onClick={() => setModalStock('todos')} />
+            <CardAlerta titulo="Agotados" cantidad={agotados.length} colorFondo="bg-red-50" colorBorde="border-red-300" colorTexto="text-red-600" onClick={() => setModalStock('agotados')} />
+            <CardAlerta titulo="Por agotarse" cantidad={porAgotarse.length} colorFondo="bg-amber-50" colorBorde="border-amber-300" colorTexto="text-amber-600" onClick={() => setModalStock('poragotarse')} />
+            <CardAlerta titulo="Todos registrados" cantidad={productos.length} colorFondo="bg-blue-50" colorBorde="border-blue-300" colorTexto="text-blue-600" onClick={() => setModalStock('todos')} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <PanelGrafica titulo="Ventas" etiqueta="Ventas totales" total={serieVentas.reduce((a, s) => a + s.valor, 0)} serie={serieVentas} color="#1D4ED8" />
-            <PanelGrafica titulo="Utilidades" etiqueta="Utilidad total" total={serieUtilidad.reduce((a, s) => a + s.valor, 0)} serie={serieUtilidad} color="#059669" />
+            <PanelGrafica titulo="Ventas" etiqueta="Ventas totales" total={serieVentas.reduce((a, s) => a + s.valor, 0)} serie={serieVentas} color="#1D4ED8" colorFondo="bg-blue-50" colorBorde="border-blue-300" />
+            <PanelGrafica titulo="Utilidades" etiqueta="Utilidad total" total={serieUtilidad.reduce((a, s) => a + s.valor, 0)} serie={serieUtilidad} color="#059669" colorFondo="bg-green-50" colorBorde="border-green-300" />
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
             <div className="px-5 py-3 border-b border-slate-100">
               <h3 className="text-sm font-semibold text-slate-700">Productos más vendidos hoy</h3>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-left">
+              <thead className="bg-[#0F1E3D] text-white text-left">
                 <tr>
                   <th className="px-4 py-2">Producto</th>
                   <th className="px-4 py-2">Cantidad</th>
@@ -116,7 +118,7 @@ export default function Dashboard() {
                   <tr><td colSpan={3} className="px-4 py-6 text-center text-slate-400">Aún no hay ventas hoy</td></tr>
                 ) : (
                   topHoy.map((p) => (
-                    <tr key={p.nombre} className="border-t border-slate-100">
+                    <tr key={p.nombre} className="border-t border-slate-300">
                       <td className="px-4 py-2 font-medium text-slate-800">{p.nombre}</td>
                       <td className="px-4 py-2 text-slate-600">{p.cantidad}</td>
                       <td className="px-4 py-2 text-slate-600">${p.total.toFixed(2)}</td>
@@ -141,15 +143,15 @@ export default function Dashboard() {
 }
 
 function CardResumen({
-  titulo, valor, delta, comparativo, serie, colorFondo, colorIcono, colorLinea, icono,
+  titulo, valor, delta, comparativo, serie, colorFondo, colorIcono, colorLinea, icono, className = "",
 }: {
   titulo: string; valor: string; delta: number | null; comparativo: string;
-  serie: { fecha: string; valor: number }[]; colorFondo: string; colorIcono: string; colorLinea: string; icono: 'carrito' | 'dinero';
+  serie: { fecha: string; valor: number }[]; colorFondo: string; colorIcono: string; colorLinea: string; icono: 'carrito' | 'dinero'; className: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
+    <div className={`rounded-xl border p-5 ${colorFondo} ${className}`}>
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${colorFondo} ${colorIcono}`}>
+        <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-white/60 ${colorIcono} ${className}`}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {icono === 'carrito' ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -180,9 +182,9 @@ function CardResumen({
   );
 }
 
-function PanelGrafica({ titulo, etiqueta, total, serie, color }: { titulo: string; etiqueta: string; total: number; serie: { fecha: string; valor: number }[]; color: string }) {
+function PanelGrafica({ titulo, etiqueta, total, serie, color, colorFondo, colorBorde }: { titulo: string; etiqueta: string; total: number; serie: { fecha: string; valor: number }[]; color: string; colorFondo: string; colorBorde: string }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
+    <div className={`rounded-xl border p-5 ${colorFondo} ${colorBorde}`}>
       <div className="flex justify-between items-start mb-1">
         <h3 className="text-sm font-semibold text-slate-700">{titulo}</h3>
         <span className="text-xs text-slate-400">Últimos 7 días</span>

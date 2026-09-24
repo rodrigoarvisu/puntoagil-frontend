@@ -35,7 +35,16 @@ export default function Compras() {
 
  const totalPaginas = Math.max(1, Math.ceil(compras.length / registrosPorPagina));
  const indiceInicio = (paginaActual - 1) * registrosPorPagina;
- const comprasPagina = compras.slice(indiceInicio, indiceInicio + registrosPorPagina);
+ const comprasOrdenadas = [...compras].sort((a, b) => {
+  const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0;
+  const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0;
+  return fechaB - fechaA;
+ })
+
+ const comprasPagina = comprasOrdenadas.slice(
+  indiceInicio,
+  indiceInicio + registrosPorPagina
+ );
 
   const abrirDetalle = async (id: number) => {
     setCargandoDetalle(true);

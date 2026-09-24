@@ -50,3 +50,26 @@
 .animate-particle {
   animation: particle linear infinite;
 }
+
+/* Scrollbar del sidebar */
+.sidebar-scroll {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #3B5A8A #0F1E3D; /* thumb track - Firefox */
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: #0F1E3D;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #1D2F52;
+  border-radius: 9999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #25406e;
+}

@@ -70,6 +70,28 @@ export default function Reportes() {
 
 function TabValuacion({ productos }: { productos: Producto[] }) {
   const { valorCosto, valorVenta, utilidadPotencial, unidadesTotales } = valuarStock(productos);
+  const inputClass = 
+  'border border-slate-200 bg-[#E6EDFD] rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
+
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
+
+  const productosConStock = productos
+  .filter((p) => p.stock > 0)
+  .sort((a, b) => b.costo * b.stock - a.costo * a.stock);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [productosConStock.length, registrosPorPagina]);
+
+  const totalPaginas = Math.max(1, Math.ceil(productosConStock.length / registrosPorPagina));
+  const indiceInicio = (paginaActual - 1) * registrosPorPagina;
+  const productosPagina = productosConStock.slice(indiceInicio, indiceInicio + registrosPorPagina);
+
+  const irAPagina = (pagina: number) => {
+    if (pagina < 1 || pagina > totalPaginas) return;
+    setPaginaActual(pagina);
+  };
 
   return (
     <div>
@@ -80,7 +102,7 @@ function TabValuacion({ productos }: { productos: Producto[] }) {
         <Card titulo="Unidades en stock" valor={unidadesTotales.toString()} sub="Total de piezas en inventario" />
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[#0F1E3D] text-white text-left">
             <tr>
@@ -92,20 +114,67 @@ function TabValuacion({ productos }: { productos: Producto[] }) {
             </tr>
           </thead>
           <tbody>
-            {productos
-              .filter((p) => p.stock > 0)
-              .sort((a, b) => b.costo * b.stock - a.costo * a.stock)
-              .map((p) => (
-                <tr key={p.id} className="border-t border-slate-100">
+            {productosConStock.length === 0 ? (
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Sin productos en stock</td></tr>
+            ) : (
+              productosPagina.map((p) => (
+                <tr key={p.id} className="border-t border-slate-300">
                   <td className="px-4 py-3 font-medium text-slate-800">{p.nombre}</td>
                   <td className="px-4 py-3 text-slate-600">{p.stock}</td>
                   <td className="px-4 py-3 text-slate-600">${p.costo.toFixed(2)}</td>
                   <td className="px-4 py-3 text-slate-600">${(p.costo * p.stock).toFixed(2)}</td>
                   <td className="px-4 py-3 text-slate-600">${(p.precioVenta * p.stock).toFixed(2)}</td>
                 </tr>
-              ))}
+              ))
+            )}
           </tbody>
         </table>
+
+        {/* --- Controles de paginación --- */}
+        {productosConStock.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-500 bg-slate-50">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>Mostrar</span>
+              <select
+                value={registrosPorPagina}
+                onChange={(e) => setRegistrosPorPagina(Number(e.target.value))}
+                className={inputClass}
+              >
+                {[10, 20, 30, 50].map((opcion) => (
+                  <option key={opcion} value={opcion}>{opcion}</option>
+                ))}
+              </select>
+              <span>registros por página</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-sm">
+              <button
+                onClick={() => irAPagina(paginaActual - 1)}
+                disabled={paginaActual === 1}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+
+              <span className="px-3 text-slate-600">
+                Página <span className="font-medium text-slate-800">{paginaActual}</span> de{' '}
+                <span className="font-medium text-slate-800">{totalPaginas}</span>
+              </span>
+
+              <button
+                onClick={() => irAPagina(paginaActual + 1)}
+                disabled={paginaActual === totalPaginas}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+
+            <div className="text-sm text-slate-500">
+              Mostrando {indiceInicio + 1}–{Math.min(indiceInicio + registrosPorPagina, productosConStock.length)} de {productosConStock.length}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

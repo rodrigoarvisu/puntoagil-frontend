@@ -42,7 +42,16 @@ export default function Ventas() {
 
   const totalPaginas = Math.max(1, Math.ceil(ventas.length / registrosPorPagina));
   const indiceInicio = (paginaActual - 1) * registrosPorPagina;
-  const ventasPagina = ventas.slice(indiceInicio, indiceInicio + registrosPorPagina);
+  const ventasOrdenadas = [...ventas].sort((a, b) => {
+  const fechaA = a.fecha ? new Date(a.fecha).getTime() : 0;
+  const fechaB = b.fecha ? new Date(b.fecha).getTime() : 0;
+  return fechaB - fechaA;
+  });
+
+  const ventasPagina = ventasOrdenadas.slice(
+    indiceInicio,
+    indiceInicio + registrosPorPagina
+  );
 
   const irAPagina = (pagina: number) => {
     if (pagina < 1 || pagina > totalPaginas) return;
