@@ -132,7 +132,7 @@ export default function CorteCajaPage() {
         (apertura ? (
           <button
             onClick={abrirModal}
-            className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition"
+            className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
           >
             Cerrar caja
           </button>

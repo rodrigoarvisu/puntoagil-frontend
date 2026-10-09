@@ -34,7 +34,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
   });
 
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-sm border border-slate-100 flex items-center justify-between px-6 sticky top-0 z-20">
+    <header className="h-16 bg-white/80 backdrop-blur-sm border border-slate-400 flex items-center justify-between px-6 sticky top-0 z-20">
       <div>
         <h1 className="text-lg font-semibold text-slate-800 leading-tight">{titulo}</h1>
         <p className="text-xs text-slate-400 capitalize hidden sm:block">{fechaHoy}</p>
@@ -43,7 +43,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
       <div className="flex items-center gap-3">
         {/* Notificaciones */}
         <button
-          className="relative w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+          className="relative w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition"
           aria-label="Notificaciones"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuAbierto((v) => !v)}
-            className="flex items-center gap-3 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-50 transition"
+            className="flex items-center gap-3 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-200 transition"
           >
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1D4ED8] to-[#0F1E3D] flex items-center justify-center text-white text-sm font-semibold shadow-sm shadow-blue-900/20 flex-shrink-0">
               {iniciales}
@@ -80,7 +80,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
             </div>
 
             <svg
-              className={`w-4 h-4 text-slate-400 transition-transform ${menuAbierto ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-slate-400 hover:text-slate-800 transition-transform ${menuAbierto ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

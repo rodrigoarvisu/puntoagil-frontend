@@ -73,3 +73,12 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: #25406e;
 }
+
+.mi-boton {
+    transition: transform 0.2s ease;
+}
+
+.mi-boton:hover {
+    transform: translateY(-3px);
+}
+

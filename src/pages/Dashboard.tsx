@@ -209,7 +209,8 @@ function PanelGrafica({ titulo, etiqueta, total, serie, color, colorFondo, color
 
 function CardAlerta({ titulo, cantidad, colorFondo, colorBorde, colorTexto, onClick }: { titulo: string; cantidad: number; colorFondo: string; colorBorde: string; colorTexto: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={`text-left rounded-xl border p-5 hover:shadow-md transition ${colorFondo} ${colorBorde}`}>
+    <button onClick={onClick} 
+    className={`text-left rounded-xl border p-5 ${colorFondo} ${colorBorde} transition-transform duration-200 ease-in-out hover:-translate-y-[3px]`}>
       <p className={`text-sm font-medium ${colorTexto}`}>{titulo}</p>
       <p className="text-3xl font-bold text-slate-800 mt-1">{cantidad}</p>
       <p className="text-xs text-slate-500 mt-1">productos</p>

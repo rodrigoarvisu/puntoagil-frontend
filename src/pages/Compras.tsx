@@ -70,7 +70,7 @@ export default function Compras() {
         <h2 className="text-xl font-semibold text-slate-800">Historial de compras</h2>
         <Link
           to="/compras/nueva"
-          className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition"
+          className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
         >
           + Nueva compra
         </Link>

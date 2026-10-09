@@ -108,13 +108,13 @@ export default function TabUsuarios() {
         <h2 className="text-xl font-semibold text-slate-800">Usuarios del sistema</h2>
         <button
           onClick={abrirCrear}
-          className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition"
+          className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
         >
           + Nuevo usuario
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[#0F1E3D] text-white text-left">
             <tr>

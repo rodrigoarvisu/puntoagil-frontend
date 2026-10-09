@@ -79,7 +79,7 @@ export default function Productos()  {
 
   useEffect(() => {
   setPaginaActual(1);
-}, [productos.length, registrosPorPagina]);
+}, [productos.length, registrosPorPagina, busqueda, filtrosAplicados]);
 
   const productosFiltrados = productos.filter((p) => {
   const q = busqueda.toLowerCase().trim();
@@ -104,7 +104,7 @@ export default function Productos()  {
 
 const totalPaginas = Math.max(1, Math.ceil(productos.length / registrosPorPagina));
 const indiceInicio = (paginaActual - 1) * registrosPorPagina;
-const productosPagina = productos.slice(indiceInicio, indiceInicio + registrosPorPagina);
+const productosPagina = productosFiltrados.slice(indiceInicio, indiceInicio + registrosPorPagina);
 
 const irAPagina = (pagina: number) => {
   if (pagina < 1 || pagina > totalPaginas) return;
@@ -225,7 +225,7 @@ const limpiarFiltros = () => {
 
       <button
         onClick={abrirCrear}
-        className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition"
+        className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
       >
         + Nuevo producto
       </button>
