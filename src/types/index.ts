@@ -73,3 +73,5 @@ export interface CorteCaja {
   efectivoContado: number;
   diferencia: number;
 }
+
+export * from './negocio';
