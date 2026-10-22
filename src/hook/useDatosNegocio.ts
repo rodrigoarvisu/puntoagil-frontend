@@ -10,6 +10,7 @@ import {
   validarNegocio,
 } from '../utils/negocio';
 import type { CampoNegocio, Negocio, NegocioErrores } from '../types';
+import { useNegocio } from '../context/NegocioContext';
 
 type ResultadoGuardado = { ok: true } | { ok: false; campoConError?: CampoNegocio };
 
@@ -20,6 +21,7 @@ export function useDatosNegocio() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const { actualizarNegocio } = useNegocio();
 
   const cargar = useCallback(async (signal?: AbortSignal) => {
     setCargando(true);
@@ -76,6 +78,7 @@ export function useDatosNegocio() {
       const guardado = desdeServidor(data);
       setDatos(guardado);
       setOriginal(guardado);
+      actualizarNegocio(guardado);
       setErrores({});
       notyf.success('Los datos del negocio se guardaron correctamente.');
       return { ok: true };

@@ -82,3 +82,84 @@
     transform: translateY(-3px);
 }
 
+[data-densidad='compacta'] table th,
+[data-densidad='compacta'] table td {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+[data-animaciones='reducidas'] *,
+[data-animaciones='reducidas'] *::before,
+[data-animaciones='reducidas'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ───────── Tema oscuro ─────────
+   Se activa con <html data-tema="oscuro"> (lo pone utils/aspecto.ts).
+   Sobrescribe los colores claros que usan tus pantallas. Si una pantalla
+   deja algún color claro, copia una regla de abajo con esa clase. */
+
+[data-tema='oscuro'] {
+  color-scheme: dark; /* selects, calendarios y scrollbars nativos */
+}
+
+[data-tema='oscuro'] body {
+  background-color: #0b1220;
+  color: #e5eaf3;
+}
+
+[data-tema='oscuro'] ::placeholder {
+  color: #7c879e;
+}
+
+/* Fondos */
+[data-tema='oscuro'] .bg-white { background-color: #131f38; }
+[data-tema='oscuro'] .bg-white\/80 { background-color: rgb(19 31 56 / 0.85); }
+[data-tema='oscuro'] .bg-slate-50 { background-color: #0b1220; }
+[data-tema='oscuro'] .bg-slate-100 { background-color: #1b2a47; }
+[data-tema='oscuro'] .bg-slate-200 { background-color: #25334f; }
+[data-tema='oscuro'] .bg-slate-300 { background-color: #3a4a70; }
+[data-tema='oscuro'] .bg-\[\#E6EDFD\] { background-color: #1b2a47; }
+[data-tema='oscuro'] .bg-blue-50,
+[data-tema='oscuro'] .bg-blue-50\/60 { background-color: rgb(29 78 216 / 0.18); }
+[data-tema='oscuro'] .bg-red-50,
+[data-tema='oscuro'] .bg-red-100 { background-color: rgb(220 38 38 / 0.16); }
+[data-tema='oscuro'] .bg-emerald-50 { background-color: rgb(16 185 129 / 0.16); }
+[data-tema='oscuro'] .bg-amber-50,
+[data-tema='oscuro'] .bg-amber-100 { background-color: rgb(245 158 11 / 0.16); }
+
+[data-tema='oscuro'] .hover\:bg-slate-50:hover { background-color: #16223b; }
+[data-tema='oscuro'] .hover\:bg-slate-100:hover { background-color: #1b2a47; }
+[data-tema='oscuro'] .hover\:bg-slate-200:hover { background-color: #22314f; }
+[data-tema='oscuro'] .hover\:bg-\[\#F1F5F9\]:hover { background-color: #18253f; }
+[data-tema='oscuro'] .hover\:bg-red-50:hover { background-color: rgb(220 38 38 / 0.16); }
+
+[data-tema='oscuro'] .text-slate-800 { color: #e5eaf3; }
+[data-tema='oscuro'] .text-slate-700 { color: #d3dae8; }
+[data-tema='oscuro'] .text-slate-600 { color: #b4bed2; }
+[data-tema='oscuro'] .text-slate-500 { color: #94a0b8; }
+[data-tema='oscuro'] .text-slate-400 { color: #7c879e; }
+[data-tema='oscuro'] .hover\:text-slate-800:hover { color: #e5eaf3; }
+[data-tema='oscuro'] .text-\[\#0F1E3D\] { color: #e5eaf3; }
+[data-tema='oscuro'] .text-\[\#1D4ED8\] { color: #7fa8ff; }
+[data-tema='oscuro'] .text-blue-600 { color: #60a5fa; }
+[data-tema='oscuro'] .text-red-600,
+[data-tema='oscuro'] .text-red-700 { color: #f87171; }
+[data-tema='oscuro'] .text-emerald-600 { color: #34d399; }
+[data-tema='oscuro'] .text-amber-600,
+[data-tema='oscuro'] .text-amber-700 { color: #fbbf24; }
+
+[data-tema='oscuro'] .border-slate-100 { border-color: #1a2740; }
+[data-tema='oscuro'] .border-slate-200 { border-color: #25334f; }
+[data-tema='oscuro'] .border-slate-300 { border-color: #2b3a58; }
+[data-tema='oscuro'] .border-slate-400 { border-color: #33436a; }
+[data-tema='oscuro'] .border-slate-500 { border-color: #3a4a70; }
+[data-tema='oscuro'] .border-\[\#0F1E3D\] { border-color: #2b3a5c; }
+[data-tema='oscuro'] .ring-white { --tw-ring-color: #131f38; }
+
+/* Ventanas de confirmación (SweetAlert2) */
+[data-tema='oscuro'] .swal2-popup { background: #131f38; color: #e5eaf3; }
+[data-tema='oscuro'] .swal2-title,
+[data-tema='oscuro'] .swal2-html-container { color: #e5eaf3; }

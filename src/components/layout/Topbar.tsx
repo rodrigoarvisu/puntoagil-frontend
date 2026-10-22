@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { productosApi } from '../../api/productos';
 import type { Producto } from '../../types';
+import { Store } from 'lucide-react';
+import { useNegocio } from '../../context/NegocioContext';
 
 /* ───────── Notificaciones ───────── */
 
@@ -72,6 +74,9 @@ export default function Topbar({ titulo }: { titulo: string }) {
 
   const esAdmin = usuario?.rol === 'ADMIN';
 
+  const { negocio } = useNegocio();
+  const nombreNegocio = negocio.nombre.trim();
+
   // Iniciales para el avatar
   const iniciales =
     usuario?.nombre
@@ -137,7 +142,6 @@ export default function Topbar({ titulo }: { titulo: string }) {
     day: 'numeric',
     month: 'long',
   });
-
   return (
     <header className="h-16 bg-white/80 backdrop-blur-sm border border-slate-400 flex items-center justify-between px-6 sticky top-0 z-20">
       <div>
@@ -146,6 +150,13 @@ export default function Topbar({ titulo }: { titulo: string }) {
       </div>
 
       <div className="flex items-center gap-3">
+        {nombreNegocio && (
+       <div title={nombreNegocio} 
+       className="hidden md:flex items-center gap-2 max-w-[220px] px-3 py-1.5 rounded-lg bg-[#E6EDFD] text-[#0F1E3D]">
+      <Store size={16} className="shrink-0 text-[#1D4ED8]" />
+       <span className="text-sm font-medium truncate">{nombreNegocio}</span>
+     </div>
+      )}
         {/* Notificaciones */}
         <div className="relative" ref={notifRef}>
           <button

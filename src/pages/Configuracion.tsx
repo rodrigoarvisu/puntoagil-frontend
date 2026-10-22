@@ -6,6 +6,7 @@ import MainLayout from '../components/layout/MainLayout';
 import TabUsuarios from '../components/configuracion/TabUsuarios';
 import TabDatos from '../components/configuracion/TabDatos';
 import { useAuth } from '../context/AuthContext';
+import TabAspecto from '@/components/configuracion/TabAspecto';
 
 type Tab = 'usuarios' | 'roles' | 'negocio' | 'tickets' | 'metodosPago' | 'respaldos' | 'aspecto';
 
@@ -99,7 +100,7 @@ export default function Configuracion() {
     tickets: <Proximamente titulo="Tickets" />,
     metodosPago: <Proximamente titulo="Métodos de pago" />,
     respaldos: <Proximamente titulo="Respaldos" />,
-    aspecto: <Proximamente titulo="Aspecto" />,
+    aspecto: <TabAspecto />,
   };
 
   return (
