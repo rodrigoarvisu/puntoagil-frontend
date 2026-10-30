@@ -13,3 +13,21 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const status = error.response?.status;
+    const esLogin = (error.config?.url ?? '').includes('/auth/login');
+    const hayToken = !!localStorage.getItem('token');
+
+    if (status === 401 && !esLogin && hayToken) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    return Promise.reject(error);
+  }
+)

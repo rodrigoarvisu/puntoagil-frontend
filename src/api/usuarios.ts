@@ -27,4 +27,7 @@ export const usuariosApi = {
     actualizar: (id: number, usuario: UsuarioUpdateRequest) => api.put<UsuarioData>(`/usuarios/${id}`, usuario),
     cambiarEstado: (id: number, activo: boolean) =>
         api.patch<UsuarioData>(`/usuarios/${id}/estado?activo=${activo}`),
+
+    restablecerPassword: (id: number, passwordNueva: string) =>
+       api.patch(`/usuarios/${id}/password`, { passwordNueva }),
 }

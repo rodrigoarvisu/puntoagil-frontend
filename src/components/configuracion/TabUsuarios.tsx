@@ -5,12 +5,13 @@ import 'notyf/notyf.min.css';
 import { useNavigate } from 'react-router-dom';
 import { usuariosApi, type UsuarioData } from '../../api/usuarios';
 import { useAuth } from '../../context/AuthContext';
+import { mensajeDeError } from '../../utils/errores';
 
 const notyf = new Notyf();
 const formVacio = { nombre: '', email: '', password: '', rol: 'CAJERO' as 'ADMIN' | 'CAJERO' };
 
-const inputClass = 
-'border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
+const inputClass =
+'border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] disabled:opacity-60 disabled:cursor-not-allowed';
 
 export default function TabUsuarios() {
   const { usuario: usuarioActual, logout } = useAuth();
@@ -21,12 +22,20 @@ export default function TabUsuarios() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [form, setForm] = useState(formVacio);
   const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  const editandoseAMiMismo = editandoId !== null && editandoId === usuarioActual?.id;
 
   const cargarDatos = async () => {
     setCargando(true);
-    const res = await usuariosApi.listarTodos();
-    setUsuarios(res.data);
-    setCargando(false);
+    try {
+      const res = await usuariosApi.listarTodos();
+      setUsuarios(res.data);
+    } catch (err) {
+      notyf.error({ message: mensajeDeError(err, 'No se pudieron cargar los usuarios.'), duration: 3500 });
+    } finally {
+      setCargando(false);
+    }
   };
 
   useEffect(() => {
@@ -50,11 +59,18 @@ export default function TabUsuarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!editandoId && form.password.length < 10) {
+      setError('La contraseña debe tener al menos 10 caracteres.');
+      return;
+    }
+
+    setGuardando(true);
     try {
       if (editandoId) {
         await usuariosApi.actualizar(editandoId, { nombre: form.nombre, email: form.email, rol: form.rol });
 
-        if (editandoId === usuarioActual?.id) {
+        if (editandoseAMiMismo) {
           notyf.success({ message: 'Tus datos se actualizaron. Vuelve a iniciar sesión.', duration: 3500 });
           setModalAbierto(false);
           setTimeout(() => {
@@ -71,8 +87,10 @@ export default function TabUsuarios() {
       }
       setModalAbierto(false);
       cargarDatos();
-    } catch (err: any) {
-      setError(err?.response?.data?.mensaje || 'Error al guardar el usuario.');
+    } catch (err) {
+      setError(mensajeDeError(err, 'Error al guardar el usuario.'));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -97,8 +115,30 @@ export default function TabUsuarios() {
       await usuariosApi.cambiarEstado(u.id, !u.activo);
       notyf.success({ message: `Usuario ${accion === 'desactivar' ? 'desactivado' : 'activado'} correctamente.`, duration: 3000 });
       cargarDatos();
-    } catch {
-      notyf.error({ message: 'No se pudo cambiar el estado del usuario.', duration: 3500 });
+    } catch (err) {
+      notyf.error({ message: mensajeDeError(err, 'No se pudo cambiar el estado del usuario.'), duration: 4000 });
+    }
+  };
+
+  const handleRestablecerPassword = async (u: UsuarioData) => {
+    const { value: nueva } = await Swal.fire({
+      title: `Nueva contraseña para ${u.nombre}`,
+      input: 'password',
+      inputPlaceholder: 'Mínimo 10 caracteres',
+      inputAttributes: { maxlength: '72', autocapitalize: 'off', autocomplete: 'new-password' },
+      showCancelButton: true,
+      confirmButtonText: 'Restablecer',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (v) =>
+        !v || v.length < 10 ? 'Mínimo 10 caracteres' : v.length > 72 ? 'Máximo 72 caracteres' : null,
+    });
+    if (!nueva) return;
+
+    try {
+      await usuariosApi.restablecerPassword(u.id, nueva);
+      notyf.success({ message: `Contraseña de ${u.nombre} restablecida.`, duration: 3000 });
+    } catch (err) {
+      notyf.error({ message: mensajeDeError(err, 'No se pudo restablecer la contraseña.'), duration: 4000 });
     }
   };
 
@@ -131,30 +171,43 @@ export default function TabUsuarios() {
             ) : usuarios.length === 0 ? (
               <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Sin usuarios registrados</td></tr>
             ) : (
-              usuarios.map((u) => (
-                <tr key={u.id} className="border-t border-slate-100">
-                  <td className="px-4 py-3 font-medium text-slate-800">
-                    {u.nombre} {u.id === usuarioActual?.id && <span className="text-xs text-slate-400">(tú)</span>}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.rol === 'ADMIN' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
-                      {u.rol === 'ADMIN' ? 'Administrador' : 'Cajero'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.activo ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
-                      {u.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-3">
-                    <button onClick={() => abrirEditar(u)} className="text-blue-600 hover:underline">Editar</button>
-                    <button onClick={() => handleCambiarEstado(u)} className="text-red-600 hover:underline">
-                      {u.activo ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </td>
-                </tr>
-              ))
+              usuarios.map((u) => {
+                const esYo = u.id === usuarioActual?.id;
+                return (
+                  <tr key={u.id} className="border-t border-slate-100">
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {u.nombre} {esYo && <span className="text-xs text-slate-400">(tú)</span>}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.rol === 'ADMIN' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
+                        {u.rol === 'ADMIN' ? 'Administrador' : 'Cajero'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.activo ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                        {u.activo ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right space-x-3">
+                      <button onClick={() => abrirEditar(u)} className="text-blue-600 hover:underline">Editar</button>
+                      {!esYo && (
+                        <button onClick={() => handleRestablecerPassword(u)} className="text-slate-600 hover:underline">
+                          Restablecer clave
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleCambiarEstado(u)}
+                        disabled={esYo}
+                        title={esYo ? 'No puedes desactivar tu propia cuenta' : undefined}
+                        className="text-red-600 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                      >
+                        {u.activo ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -176,6 +229,7 @@ export default function TabUsuarios() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Nombre</label>
                 <input
                   required
+                  maxLength={100}
                   value={form.nombre}
                   placeholder='Ingresa el nombre del usuario'
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
@@ -188,6 +242,8 @@ export default function TabUsuarios() {
                 <input
                   required
                   type="email"
+                  maxLength={150}
+                  disabled={editandoseAMiMismo}
                   value={form.email}
                   placeholder='Ingresa el email del usuario'
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -200,16 +256,21 @@ export default function TabUsuarios() {
                   <input
                     required
                     type="password"
+                    minLength={10}
+                    maxLength={72}
+                    autoComplete="new-password"
                     value={form.password}
                     placeholder='Ingresa la contraseña del usuario'
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className={inputClass}
                   />
+                  <p className="text-xs text-slate-400 mt-1">Mínimo 10 caracteres.</p>
                 </div>
               )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
                 <select
+                  disabled={editandoseAMiMismo}
                   value={form.rol}
                   onChange={(e) => setForm({ ...form, rol: e.target.value as 'ADMIN' | 'CAJERO' })}
                   className={inputClass}
@@ -217,6 +278,11 @@ export default function TabUsuarios() {
                   <option value="CAJERO">Cajero</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
+                {editandoseAMiMismo && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    Tu email y rol los puede cambiar otro administrador.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -229,9 +295,10 @@ export default function TabUsuarios() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm bg-[#1D4ED8] text-white rounded-lg hover:bg-[#1a44c0]"
+                  disabled={guardando}
+                  className="px-4 py-2 text-sm bg-[#1D4ED8] text-white rounded-lg hover:bg-[#1a44c0] disabled:opacity-60"
                 >
-                  Guardar
+                  {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </form>

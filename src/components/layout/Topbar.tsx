@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { productosApi } from '../../api/productos';
 import type { Producto } from '../../types';
-import { Store } from 'lucide-react';
+import { Store, Key } from 'lucide-react';
 import { useNegocio } from '../../context/NegocioContext';
+import ModalCambiarPassword from './ModalCambiarPassword';
+
 
 /* ───────── Notificaciones ───────── */
 
@@ -68,6 +70,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
   const [notifAbierto, setNotifAbierto] = useState(false);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [leidas, setLeidas] = useState<string[]>(leerLeidas);
+  const [passwordAbierto, setPasswordAbierto] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -143,6 +146,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
     month: 'long',
   });
   return (
+    <>
     <header className="h-16 bg-white/80 backdrop-blur-sm border border-slate-400 flex items-center justify-between px-6 sticky top-0 z-20">
       <div>
         <h1 className="text-lg font-semibold text-slate-800 leading-tight">{titulo}</h1>
@@ -252,74 +256,88 @@ export default function Topbar({ titulo }: { titulo: string }) {
         <div className="w-px h-8 bg-slate-200 border border-[#0F1E3D]" />
 
         {/* Menú de usuario */}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => {
-              setNotifAbierto(false);
-              setMenuAbierto((v) => !v);
-            }}
-            className="flex items-center gap-3 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-200 transition"
-          >
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1D4ED8] to-[#0F1E3D] flex items-center justify-center text-white text-sm font-semibold shadow-sm shadow-blue-900/20 flex-shrink-0">
-              {iniciales}
-            </div>
+        {/* Menú de usuario */}
+<div className="relative" ref={menuRef}>
+  <button
+    onClick={() => {
+      setNotifAbierto(false);
+      setMenuAbierto((v) => !v);
+    }}
+    className="flex items-center gap-3 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-200 transition"
+  >
+    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#1D4ED8] to-[#0F1E3D] flex items-center justify-center text-white text-sm font-semibold shadow-sm shadow-blue-900/20 flex-shrink-0">
+      {iniciales}
+    </div>
 
-            <div className="text-left hidden sm:block">
-              <p className="text-sm font-medium text-slate-800 leading-tight">
-                {usuario?.nombre}
-              </p>
-              <span
-                className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md mt-0.5 ${
-                  esAdmin ? 'bg-blue-50 text-[#1D4ED8]' : 'bg-emerald-50 text-emerald-600'
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    esAdmin ? 'bg-[#1D4ED8]' : 'bg-emerald-500'
-                  }`}
-                />
-                {esAdmin ? 'Administrador' : 'Cajero'}
-              </span>
-            </div>
+    <div className="text-left hidden sm:block">
+      <p className="text-sm font-medium text-slate-800 leading-tight">
+        {usuario?.nombre}
+      </p>
+      <span
+        className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md mt-0.5 ${
+          esAdmin ? 'bg-blue-50 text-[#1D4ED8]' : 'bg-emerald-50 text-emerald-600'
+        }`}
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            esAdmin ? 'bg-[#1D4ED8]' : 'bg-emerald-500'
+          }`}
+        />
+        {esAdmin ? 'Administrador' : 'Cajero'}
+      </span>
+    </div>
 
-            <svg
-              className={`w-4 h-4 text-slate-400 hover:text-slate-800 transition-transform ${
-                menuAbierto ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+    <svg
+      className={`w-4 h-4 text-slate-400 hover:text-slate-800 transition-transform ${
+        menuAbierto ? 'rotate-180' : ''
+      }`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
 
-          {/* Dropdown */}
-          {menuAbierto && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg shadow-slate-200/80 border border-slate-400 py-2 animate-dropdown">
-              <div className="px-4 py-2.5 border-b border-slate-400">
-                <p className="text-sm font-medium text-slate-800">{usuario?.nombre}</p>
-                <p className="text-xs text-slate-400">{usuario?.email}</p>
-              </div>
+  {/* Dropdown */}
+  {menuAbierto && (
+    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg shadow-slate-200/80 border border-slate-400 py-2 animate-dropdown">
+      <div className="px-4 py-2.5 border-b border-slate-400">
+        <p className="text-sm font-medium text-slate-800">{usuario?.nombre}</p>
+        <p className="text-xs text-slate-400">{usuario?.email}</p>
+      </div>
 
-              <button
-                onClick={logout}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8.25 9V5.25A2.25 2.25 0 0110.5 3h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-6a2.25 2.25 0 01-2.25-2.25V15m-3 0l-3-3m0 0l3-3m-3 3H15"
-                  />
-                </svg>
-                Cerrar sesión
-              </button>
-            </div>
-          )}
-        </div>
+      <button
+        onClick={() => {
+          setMenuAbierto(false);
+          setPasswordAbierto(true);
+        }}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition"
+      >
+        <Key size={16} />
+        Cambiar contraseña
+      </button>
+
+      <button
+        onClick={logout}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M8.25 9V5.25A2.25 2.25 0 0110.5 3h6a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0116.5 21h-6a2.25 2.25 0 01-2.25-2.25V15m-3 0l-3-3m0 0l3-3m-3 3H15"
+          />
+        </svg>
+        Cerrar sesión
+      </button>
+    </div>
+  )}
+</div>
       </div>
     </header>
+    {passwordAbierto && <ModalCambiarPassword onClose={() => setPasswordAbierto(false)} />}
+    </>
   );
 }
