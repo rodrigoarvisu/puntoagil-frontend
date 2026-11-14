@@ -156,7 +156,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
       <div className="flex items-center gap-3">
         {nombreNegocio && (
        <div title={nombreNegocio} 
-       className="hidden md:flex items-center gap-2 max-w-[220px] px-3 py-1.5 rounded-lg bg-[#E6EDFD] text-[#0F1E3D]">
+       className="hidden md:flex items-center gap-2 max-w-[600px] px-3 py-1.5 rounded-lg bg-[#E6EDFD] text-[#0F1E3D]">
       <Store size={16} className="shrink-0 text-[#1D4ED8]" />
        <span className="text-sm font-medium truncate">{nombreNegocio}</span>
      </div>

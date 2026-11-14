@@ -29,21 +29,31 @@ export interface Usuario {
   rol: 'ADMIN' | 'CAJERO';
 }
 
+export interface PagoVenta {
+  id: number;
+  metodoPagoId: number;
+  metodoPago: string;
+  tipo: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO';
+  monto: number;
+  referencia: string | null;
+}
+
 export interface DetalleVenta {
-  id?: number;
-  producto: { id: number };
+  id: number;
+  producto: { id: number; nombre: string };
   cantidad: number;
   precioUnitario: number;
-  subtotal?: number;
+  subtotal: number;
+  costoUnitario: number | null; // null para el cajero
 }
 
 export interface Venta {
-  id?: number;
-  usuario: { id: number };
-  fecha?: string;
-  total?: number;
+  id: number;
+  fecha: string;
+  total: number;
+  usuario: { id: number; nombre: string };
   detalles: DetalleVenta[];
-  metodoPago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
+  pagos: PagoVenta[];
 }
 
 export interface DetalleCompra {

@@ -3,33 +3,53 @@ import MainLayout from '../components/layout/MainLayout';
 import { productosApi } from '../api/productos';
 import { ventasApi } from '../api/ventas';
 import { comprasApi } from '../api/compras';
-import { valuarStock } from '../utils/reportes';
+import { useAuth } from '../context/AuthContext';
+import { mensajeDeError } from '../utils/errores';
 import type { Producto, Venta, Compra } from '../types';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { filtrarPorRango, agruparPorDia, topProductosVendidos, topProductosComprados, totalPorMetodoPago, comprasPorProveedor, calcularUtilidadPorDia, topProductosPorUtilidad } from '../utils/reportes';
+import { valuarStock, filtrarPorRango, agruparPorDia, topProductosVendidos, topProductosComprados, comprasPorProveedor } from '../utils/reportes';
+import { pagosPorTipo, pagosPorMetodo, utilidadPorDia, topProductosPorUtilidad } from '../utils/reportesVentas';
 
 type Tab = 'ventas' | 'compras' | 'utilidades' | 'valuacion';
 
+const PALETA_PROVEEDORES = ['#247fe0', '#ab87ea', '#F59E0B', '#059669', '#DC2626', '#0891B2'];
+
 export default function Reportes() {
-  const [tab, setTab] = useState<Tab>('valuacion');
+  const { usuario } = useAuth();
+  const esAdmin = usuario?.rol === 'ADMIN';
+
+  const [tab, setTab] = useState<Tab>(esAdmin ? 'valuacion' : 'ventas');
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [compras, setCompras] = useState<Compra[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      productosApi.listarTodos(),
-      ventasApi.listarTodas(),
-      comprasApi.listarTodas(),
-    ]).then(([resProductos, resVentas, resCompras]) => {
-      setProductos(resProductos.data);
-      setVentas(resVentas.data);
-      setCompras(resCompras.data);
-      setCargando(false);
-    });
-  }, []);
+    const cargar = async () => {
+      try {
+        if (esAdmin) {
+          const [resProductos, resVentas, resCompras] = await Promise.all([
+            productosApi.listarTodos(),
+            ventasApi.listarTodas(),
+            comprasApi.listarTodas(),
+          ]);
+          setProductos(resProductos.data);
+          setVentas(resVentas.data);
+          setCompras(resCompras.data);
+        } else {
+          const resVentas = await ventasApi.listarTodas();
+          setVentas(resVentas.data);
+        }
+      } catch (err) {
+        setError(mensajeDeError(err, 'No se pudieron cargar los reportes.'));
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
+  }, [esAdmin]);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'valuacion', label: 'Valuación de stock' },
@@ -37,11 +57,12 @@ export default function Reportes() {
     { id: 'compras', label: 'Compras' },
     { id: 'utilidades', label: 'Utilidades' },
   ];
+  const tabsVisibles = esAdmin ? tabs : tabs.filter((t) => t.id === 'ventas');
 
   return (
     <MainLayout titulo="Reportes">
       <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-lg w-fit">
-        {tabs.map((t) => (
+        {tabsVisibles.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -56,12 +77,14 @@ export default function Reportes() {
 
       {cargando ? (
         <p className="text-center text-slate-400 py-12">Cargando datos...</p>
+      ) : error ? (
+        <p className="text-center text-red-500 py-12">{error}</p>
       ) : (
         <>
-          {tab === 'valuacion' && <TabValuacion productos={productos} />}
+          {esAdmin && tab === 'valuacion' && <TabValuacion productos={productos} />}
           {tab === 'ventas' && <TabVentas ventas={ventas} />}
-          {tab === 'compras' && <TabCompras compras={compras} />}
-          {tab === 'utilidades' && <TabUtilidades ventas={ventas} />}
+          {esAdmin && tab === 'compras' && <TabCompras compras={compras} />}
+          {esAdmin && tab === 'utilidades' && <TabUtilidades ventas={ventas} />}
         </>
       )}
     </MainLayout>
@@ -70,15 +93,15 @@ export default function Reportes() {
 
 function TabValuacion({ productos }: { productos: Producto[] }) {
   const { valorCosto, valorVenta, utilidadPotencial, unidadesTotales } = valuarStock(productos);
-  const inputClass = 
-  'border border-slate-200 bg-[#E6EDFD] rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
+  const inputClass =
+    'border border-slate-200 bg-[#E6EDFD] rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
 
   const [paginaActual, setPaginaActual] = useState(1);
   const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
 
   const productosConStock = productos
-  .filter((p) => p.stock > 0)
-  .sort((a, b) => b.costo * b.stock - a.costo * a.stock);
+    .filter((p) => p.stock > 0)
+    .sort((a, b) => b.costo * b.stock - a.costo * a.stock);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -225,69 +248,69 @@ function TabVentas({ ventas }: { ventas: Venta[] }) {
   const datosGrafica = agruparPorDia(ventasFiltradas);
   const top = topProductosVendidos(ventasFiltradas);
   const totalPeriodo = ventasFiltradas.reduce((acc, v) => acc + (v.total ?? 0), 0);
-  const porMetodoPago = totalPorMetodoPago(ventasFiltradas);
 
-  const datosDona = [
-  { name: 'Efectivo', value: porMetodoPago.EFECTIVO, color: '#247fe0' },
-  { name: 'Tarjeta', value: porMetodoPago.TARJETA, color: '#ab87ea' },
-  { name: 'Transferencia', value: porMetodoPago.TRANSFERENCIA, color: '#F59E0B' },
-].filter((d) => d.value > 0);
+  const porTipo = pagosPorTipo(ventasFiltradas);
+  const datosDona = pagosPorMetodo(ventasFiltradas).map((m, i) => ({
+    ...m,
+    color: PALETA_PROVEEDORES[i % PALETA_PROVEEDORES.length],
+  }));
 
   return (
     <div>
       <div className="flex justify-end items-end gap-3 mb-4">
         <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Desde</label>
-        <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-       </div>
-       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Hasta</label>
-        <input type="date" value={fin} onChange={(e) => setFin(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Desde</label>
+          <input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Hasta</label>
+          <input type="date" value={fin} onChange={(e) => setFin(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+        </div>
       </div>
-    </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <CardIcono titulo="Total de ventas" valor={`$${totalPeriodo.toFixed(2)}`} colorFondo="bg-green-100" colorBorde="border-green-100" colorIcono="text-green-600" icono="total" />
-    <CardIcono titulo="Efectivo" valor={`$${porMetodoPago.EFECTIVO.toFixed(2)}`} colorFondo="bg-blue-100" colorBorde="border-blue-100" colorIcono="text-blue-600" icono="efectivo" />
-    <CardIcono titulo="Tarjeta" valor={`$${porMetodoPago.TARJETA.toFixed(2)}`} colorFondo="bg-purple-100" colorBorde="border-purple-100" colorIcono="text-purple-600" icono="tarjeta" />
-    <CardIcono titulo="Transferencia" valor={`$${porMetodoPago.TRANSFERENCIA.toFixed(2)}`} colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia" />  
-</div>
-    
-       
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 ${porTipo.OTRO > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
+        <CardIcono titulo="Total de ventas" valor={`$${totalPeriodo.toFixed(2)}`} colorFondo="bg-green-100" colorBorde="border-green-100" colorIcono="text-green-600" icono="total" />
+        <CardIcono titulo="Efectivo" valor={`$${porTipo.EFECTIVO.toFixed(2)}`} colorFondo="bg-blue-100" colorBorde="border-blue-100" colorIcono="text-blue-600" icono="efectivo" />
+        <CardIcono titulo="Tarjeta" valor={`$${porTipo.TARJETA.toFixed(2)}`} colorFondo="bg-purple-100" colorBorde="border-purple-100" colorIcono="text-purple-600" icono="tarjeta" />
+        <CardIcono titulo="Transferencia" valor={`$${porTipo.TRANSFERENCIA.toFixed(2)}`} colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia" />
+        {porTipo.OTRO > 0 && (
+          <CardIcono titulo="Otros" valor={`$${porTipo.OTRO.toFixed(2)}`} colorFondo="bg-slate-100" colorBorde="border-slate-100" colorIcono="text-slate-600" icono="total" />
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-  <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
-    <h3 className="text-sm font-semibold text-slate-700 mb-4">Ventas por día</h3>
-    <ResponsiveContainer width="100%" height={280}>
-      <LineChart data={datosGrafica}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-        <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Total']} />
-        <Line type="monotone" dataKey="total" stroke="#1D4ED8" strokeWidth={2} dot={false} />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-700 mb-4">Ventas por día</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={datosGrafica}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Total']} />
+              <Line type="monotone" dataKey="total" stroke="#1D4ED8" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-  <div className="bg-white rounded-xl border border-slate-200 p-5">
-    <h3 className="text-sm font-semibold text-slate-700 mb-4">Ventas por método de pago</h3>
-    {datosDona.length === 0 ? (
-      <p className="text-center text-slate-400 py-16 text-sm">Sin ventas en este periodo</p>
-    ) : (
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie data={datosDona} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80} paddingAngle={2}>
-            {datosDona.map((d) => (
-              <Cell key={d.name} fill={d.color} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, '']} />
-          <Legend verticalAlign="bottom" height={36} iconType="circle" />
-        </PieChart>
-      </ResponsiveContainer>
-    )}
-  </div>
-</div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-700 mb-4">Ventas por método de pago</h3>
+          {datosDona.length === 0 ? (
+            <p className="text-center text-slate-400 py-16 text-sm">Sin ventas en este periodo</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={datosDona} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80} paddingAngle={2}>
+                  {datosDona.map((d) => (
+                    <Cell key={d.name} fill={d.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, '']} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100">
@@ -319,8 +342,6 @@ function TabVentas({ ventas }: { ventas: Venta[] }) {
     </div>
   );
 }
-
-const PALETA_PROVEEDORES = ['#247fe0', '#ab87ea', '#F59E0B', '#059669', '#DC2626', '#0891B2'];
 
 function TabCompras({ compras }: { compras: Compra[] }) {
   const [inicio, setInicio] = useState(() => {
@@ -363,23 +384,22 @@ function TabCompras({ compras }: { compras: Compra[] }) {
             <input type="date" value={fin} onChange={(e) => setFin(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
           </div>
         </div>
-        </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <CardIcono titulo="Total de compras" valor={`$${totalPeriodo.toFixed(2)}`} colorFondo="bg-red-100" colorBorde="border-red-100" colorIcono="text-red-600" icono="total" />
-          <CardIcono titulo="Número de compras" valor={numeroCompras.toString()} colorFondo="bg-blue-100" colorBorde="border-blue-100" colorIcono="text-blue-600" icono="tarjeta" />
-          <CardIcono
-            titulo="Producto más comprado"
-            valor={productoTop ? productoTop.nombre : '—'}
-            colorFondo="bg-purple-100" colorBorde="border-purple-100" colorIcono="text-purple-600" icono="efectivo"
-          />
-          <CardIcono
-            titulo="Proveedor principal"
-            valor={proveedorTop ? proveedorTop.name : '—'}
-            colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia"
-          />
-        </div>
-      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <CardIcono titulo="Total de compras" valor={`$${totalPeriodo.toFixed(2)}`} colorFondo="bg-red-100" colorBorde="border-red-100" colorIcono="text-red-600" icono="total" />
+        <CardIcono titulo="Número de compras" valor={numeroCompras.toString()} colorFondo="bg-blue-100" colorBorde="border-blue-100" colorIcono="text-blue-600" icono="tarjeta" />
+        <CardIcono
+          titulo="Producto más comprado"
+          valor={productoTop ? productoTop.nombre : '—'}
+          colorFondo="bg-purple-100" colorBorde="border-purple-100" colorIcono="text-purple-600" icono="efectivo"
+        />
+        <CardIcono
+          titulo="Proveedor principal"
+          valor={proveedorTop ? proveedorTop.name : '—'}
+          colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia"
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
@@ -467,7 +487,7 @@ function TabUtilidades({ ventas }: { ventas: Venta[] }) {
   const [fin, setFin] = useState(() => new Date().toISOString().slice(0, 10));
 
   const ventasFiltradas = filtrarPorRango(ventas, inicio, fin + 'T23:59:59');
-  const datosGrafica = calcularUtilidadPorDia(ventasFiltradas);
+  const datosGrafica = utilidadPorDia(ventasFiltradas);
   const top = topProductosPorUtilidad(ventasFiltradas);
 
   const totalVentas = ventasFiltradas.reduce((acc, v) => acc + (v.total ?? 0), 0);
@@ -494,8 +514,7 @@ function TabUtilidades({ ventas }: { ventas: Venta[] }) {
         <CardIcono titulo="Utilidad total" valor={`$${totalUtilidad.toFixed(2)}`} colorFondo="bg-green-100" colorBorde="border-green-100" colorIcono="text-green-600" icono="total" />
         <CardIcono titulo="Total vendido" valor={`$${totalVentas.toFixed(2)}`} colorFondo="bg-blue-100" colorBorde="border-blue-100" colorIcono="text-blue-600" icono="efectivo" />
         <CardIcono titulo="Margen de utilidad" valor={`${margen.toFixed(1)}%`} colorFondo="bg-purple-100" colorBorde="border-purple-100" colorIcono="text-purple-600" icono="tarjeta" />
-        <CardIcono titulo="Producto más rentable" valor={productoMasRentable ? productoMasRentable.nombre : '—'} colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia"
-        />
+        <CardIcono titulo="Producto más rentable" valor={productoMasRentable ? productoMasRentable.nombre : '—'} colorFondo="bg-amber-100" colorBorde="border-amber-100" colorIcono="text-amber-600" icono="transferencia" />
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">

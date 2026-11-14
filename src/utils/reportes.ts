@@ -1,11 +1,19 @@
 import type { Venta, Compra, Producto } from '../types';
 
+// Compara solo el día (YYYY-MM-DD): una venta del último día del rango siempre entra,
+// sin importar la hora ni los microsegundos que mande el servidor
 export function filtrarPorRango<T extends { fecha?: string }>(
   items: T[],
   inicio: string,
   fin: string
 ): T[] {
-  return items.filter((i) => i.fecha && i.fecha >= inicio && i.fecha <= fin);
+  const desde = inicio.slice(0, 10);
+  const hasta = fin.slice(0, 10);
+  return items.filter((i) => {
+    if (!i.fecha) return false;
+    const dia = i.fecha.slice(0, 10);
+    return dia >= desde && dia <= hasta;
+  });
 }
 
 export function agruparPorDia(items: { fecha?: string; total?: number }[]) {
@@ -21,17 +29,19 @@ export function agruparPorDia(items: { fecha?: string; total?: number }[]) {
 }
 
 export function topProductosVendidos(ventas: Venta[], top = 5) {
-  const mapa = new Map<string, { nombre: string; cantidad: number; total: number }>();
+  const mapa = new Map<number, { nombre: string; cantidad: number; total: number }>();
   ventas.forEach((v) => {
     v.detalles.forEach((d) => {
-      const nombre = (d.producto as any).nombre ?? `#${d.producto.id}`;
-      const actual = mapa.get(nombre) ?? { nombre, cantidad: 0, total: 0 };
+      const actual =
+        mapa.get(d.producto.id) ?? { nombre: d.producto.nombre.trim(), cantidad: 0, total: 0 };
       actual.cantidad += d.cantidad;
-      actual.total += d.subtotal ?? d.cantidad * d.precioUnitario;
-      mapa.set(nombre, actual);
+      actual.total += d.subtotal;
+      mapa.set(d.producto.id, actual);
     });
   });
-  return Array.from(mapa.values()).sort((a, b) => b.cantidad - a.cantidad).slice(0, top);
+  return Array.from(mapa.values())
+    .sort((a, b) => b.cantidad - a.cantidad)
+    .slice(0, top);
 }
 
 export function topProductosComprados(compras: Compra[], top = 5) {
@@ -48,40 +58,6 @@ export function topProductosComprados(compras: Compra[], top = 5) {
   return Array.from(mapa.values()).sort((a, b) => b.cantidad - a.cantidad).slice(0, top);
 }
 
-export function calcularUtilidadPorDia(ventas: Venta[]) {
-  const mapa = new Map<string, number>();
-  ventas.forEach((v) => {
-    if (!v.fecha) return;
-    const dia = v.fecha.slice(0, 10);
-    let utilidadVenta = 0;
-    v.detalles.forEach((d) => {
-      const costo = (d.producto as any).costo ?? 0;
-      const subtotal = d.subtotal ?? d.cantidad * d.precioUnitario;
-      utilidadVenta += subtotal - costo * d.cantidad;
-    });
-    mapa.set(dia, (mapa.get(dia) ?? 0) + utilidadVenta);
-  });
-  return Array.from(mapa.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([fecha, utilidad]) => ({ fecha, utilidad }));
-}
-
-export function topProductosPorUtilidad(ventas: Venta[], top = 5) {
-  const mapa = new Map<string, { nombre: string; utilidad: number }>();
-  ventas.forEach((v) => {
-    v.detalles.forEach((d) => {
-      const nombre = (d.producto as any).nombre ?? `#${d.producto.id}`;
-      const costo = (d.producto as any).costo ?? 0;
-      const subtotal = d.subtotal ?? d.cantidad * d.precioUnitario;
-      const utilidad = subtotal - costo * d.cantidad;
-      const actual = mapa.get(nombre) ?? { nombre, utilidad: 0 };
-      actual.utilidad += utilidad;
-      mapa.set(nombre, actual);
-    });
-  });
-  return Array.from(mapa.values()).sort((a, b) => b.utilidad - a.utilidad).slice(0, top);
-}
-
 export function valuarStock(productos: Producto[]) {
   const valorCosto = productos.reduce((acc, p) => acc + p.costo * p.stock, 0);
   const valorVenta = productos.reduce((acc, p) => acc + p.precioVenta * p.stock, 0);
@@ -94,23 +70,13 @@ export function valuarStock(productos: Producto[]) {
   };
 }
 
-export function totalPorMetodoPago(ventas: Venta[]) {
-  const resultado = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
-  ventas.forEach((v) => {
-    if(v.metodoPago) {
-      resultado[v.metodoPago] += v.total ?? 0;
-    }
-  });
-  return resultado;
-}
-
 export function comprasPorProveedor(compras: Compra[]) {
   const mapa = new Map<string, number>();
-    compras.forEach((c) => {
-      const nombre = (c.proveedor as any)?.nombre ?? `#${c.proveedor.id}`;
-      mapa.set(nombre, (mapa.get(nombre) ?? 0) + (c.total ?? 0));
-    });
-    return Array.from(mapa.entries())
+  compras.forEach((c) => {
+    const nombre = (c.proveedor as any)?.nombre ?? `#${c.proveedor.id}`;
+    mapa.set(nombre, (mapa.get(nombre) ?? 0) + (c.total ?? 0));
+  });
+  return Array.from(mapa.entries())
     .sort(([, a], [, b]) => b - a)
     .map(([name, value]) => ({ name, value }));
 }
@@ -122,15 +88,14 @@ export function esHoy(fecha?: string) {
   return fecha.slice(0, 10) === hoyLocal;
 }
 
+// Utilidad de una venta con el costo que tenía el producto al venderse.
+// Si falta el costo (por ejemplo, la respuesta del cajero), la línea cuenta con utilidad 0
+// en lugar de mostrar todo el precio como ganancia.
 export function utilidadDeVenta(v: Venta): number {
-  let utilidad = 0;
-  v.detalles.forEach((d) => {
-    const costo = (d.producto as any).costo ?? 0;
-    const subtotal = d.subtotal ?? d.cantidad * d.precioUnitario;
-
-    utilidad += subtotal - costo * d.cantidad;
-  });
-  return utilidad;
+  return v.detalles.reduce(
+    (acc, d) => acc + d.subtotal - (d.costoUnitario ?? d.precioUnitario) * d.cantidad,
+    0
+  );
 }
 
 export function serieUltimosNDias<T extends { fecha?: string }>(

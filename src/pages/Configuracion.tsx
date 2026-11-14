@@ -7,6 +7,7 @@ import TabUsuarios from '../components/configuracion/TabUsuarios';
 import TabDatos from '../components/configuracion/TabDatos';
 import { useAuth } from '../context/AuthContext';
 import TabAspecto from '@/components/configuracion/TabAspecto';
+import TabMetodosPago from '@/components/configuracion/TabMetodosPago';
 
 type Tab = 'usuarios' | 'roles' | 'negocio' | 'tickets' | 'metodosPago' | 'respaldos' | 'aspecto';
 
@@ -98,7 +99,7 @@ export default function Configuracion() {
     negocio: <TabDatos onCambiosPendientes={setCambiosPendientes} />,
     roles: <Proximamente titulo="Roles y permisos" />,
     tickets: <Proximamente titulo="Tickets" />,
-    metodosPago: <Proximamente titulo="Métodos de pago" />,
+    metodosPago: <TabMetodosPago />,
     respaldos: <Proximamente titulo="Respaldos" />,
     aspecto: <TabAspecto />,
   };

@@ -7,8 +7,16 @@ import MainLayout from '../components/layout/MainLayout';
 import { ventasApi } from '../api/ventas';
 import { productosApi } from '../api/productos';
 import type { Venta, Producto } from '../types';
+import { mensajeDeError } from '../utils/errores';
 
 const notyf = new Notyf();
+
+const estiloTipo: Record<string, string> = {
+  EFECTIVO: 'bg-blue-50 text-blue-600',
+  TARJETA: 'bg-purple-50 text-purple-600',
+  TRANSFERENCIA: 'bg-amber-50 text-amber-600',
+  OTRO: 'bg-slate-100 text-slate-600',
+};
 
 // Se usa en el select "Mostrar registros por página"
 const inputClass =

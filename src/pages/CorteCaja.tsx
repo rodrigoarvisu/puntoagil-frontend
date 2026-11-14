@@ -7,6 +7,7 @@ import { corteCajaApi } from '../api/corteCaja';
 import { aperturaCajaApi, type AperturaCajaData } from '../api/aperturaCaja';
 import { ventasApi } from '../api/ventas';
 import { useAuth } from '../context/AuthContext';
+import { mensajeDeError } from '../utils/errores';
 import type { CorteCaja } from '../types';
 
 const notyf = new Notyf();
@@ -14,13 +15,18 @@ const notyf = new Notyf();
 const inputClass =
   'border border-slate-200 bg-[#E6EDFD] rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]';
 
-
-function ahora() {
-  return new Date().toISOString();
+// Hora local en formato ISO sin zona (como la maneja el servidor), no en UTC
+function ahoraLocal() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
 export default function CorteCajaPage() {
   const { usuario } = useAuth();
+  const esAdmin = usuario?.rol === 'ADMIN';
+  const columnas = esAdmin ? 5 : 4;
+
   const [cortes, setCortes] = useState<CorteCaja[]>([]);
   const [cargando, setCargando] = useState(true);
   const [apertura, setApertura] = useState<AperturaCajaData | null>(null);
@@ -36,32 +42,44 @@ export default function CorteCajaPage() {
 
   const cargarDatos = async () => {
     setCargando(true);
-    const res = await corteCajaApi.listarTodos();
-    setCortes(res.data);
-    setCargando(false);
+    try {
+      const res = await corteCajaApi.listarTodos();
+      setCortes(res.data);
+    } catch (err) {
+      notyf.error({ message: mensajeDeError(err, 'No se pudieron cargar los cortes.'), duration: 3500 });
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Efectivo esperado = fondo inicial + la parte pagada en efectivo de las ventas desde la apertura
+  const calcularEfectivoEsperado = async (aperturaActiva: AperturaCajaData) => {
+    try {
+      const res = await ventasApi.listarTodas();
+      const desde = new Date(aperturaActiva.fecha).getTime();
+      const efectivo = res.data
+        .filter((v) => new Date(v.fecha).getTime() >= desde)
+        .flatMap((v) => v.pagos)
+        .filter((p) => p.tipo === 'EFECTIVO')
+        .reduce((acc, p) => acc + p.monto, 0);
+      setEfectivoEsperado(Math.round((aperturaActiva.montoInicial + efectivo) * 100) / 100);
+    } catch (err) {
+      notyf.error({ message: mensajeDeError(err, 'No se pudo calcular el efectivo esperado.'), duration: 3500 });
+    }
   };
 
   const verificarAperturaActiva = async () => {
-  setCargandoApertura(true);
-  try {
-    const res = await aperturaCajaApi.obtenerActiva();
-    const activa = res.status === 200 && res.data ? res.data : null;
-    setApertura(activa);
-    if (activa) await calcularEfectivoEsperado(activa);
-  } catch {
-    setApertura(null);
-  } finally {
-    setCargandoApertura(false);
-  }
-};
-
-  const calcularEfectivoEsperado = async (aperturaActiva: AperturaCajaData) => {
-  const res = await ventasApi.listarTodas();
-  const ventasEfectivoDesdeApertura = res.data.filter(
-    (v) => v.metodoPago === 'EFECTIVO' && v.fecha && v.fecha >= aperturaActiva.fecha
-  );
-  const totalEfectivo = ventasEfectivoDesdeApertura.reduce((acc, v) => acc + (v.total ?? 0), 0);
-  setEfectivoEsperado(aperturaActiva.montoInicial + totalEfectivo);
+    setCargandoApertura(true);
+    try {
+      const res = await aperturaCajaApi.obtenerActiva();
+      const activa = res.status === 200 && res.data ? res.data : null;
+      setApertura(activa);
+      if (activa) await calcularEfectivoEsperado(activa);
+    } catch {
+      setApertura(null);
+    } finally {
+      setCargandoApertura(false);
+    }
   };
 
   useEffect(() => {
@@ -80,7 +98,7 @@ export default function CorteCajaPage() {
   const irAPagina = (pagina: number) => {
     if (pagina < 1 || pagina > totalPaginas) return;
     setPaginaActual(pagina);
-  }
+  };
 
   const abrirModal = () => {
     setEfectivoContado(0);
@@ -106,7 +124,7 @@ export default function CorteCajaPage() {
       const res = await corteCajaApi.generar({
         usuarioId: usuario.id,
         inicio: apertura.fecha,
-        fin: ahora(),
+        fin: ahoraLocal(),
         efectivoContado: Number(efectivoContado),
       });
       notyf.success({ message: 'Caja cerrada correctamente.', duration: 3000 });
@@ -114,9 +132,9 @@ export default function CorteCajaPage() {
       cargarDatos();
       verificarAperturaActiva();
       setCorteSeleccionado(res.data);
-    } catch (err: any) {
+    } catch (err) {
       notyf.error({
-        message: err?.response?.data?.mensaje || 'No se pudo generar el corte.',
+        message: mensajeDeError(err, 'No se pudo generar el corte.'),
         duration: 4000,
       });
     } finally {
@@ -125,267 +143,268 @@ export default function CorteCajaPage() {
   };
 
   return (
-  <MainLayout titulo="Corte de Caja">
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-xl font-semibold text-slate-800">Historial de cortes</h2>
-      {!cargandoApertura &&
-        (apertura ? (
-          <button
-            onClick={abrirModal}
-            className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
-          >
-            Cerrar caja
-          </button>
-        ) : (
-          <span className="text-sm text-slate-400">
-            No hay una caja abierta actualmente
-          </span>
-        ))}
-    </div>
-
-    {apertura && (
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-sm text-blue-800 flex justify-between items-center">
-        <span>
-          Caja abierta desde{" "}
-          <strong>{new Date(apertura.fecha).toLocaleString("es-MX")}</strong> ·
-          Fondo inicial: <strong>${apertura.montoInicial.toFixed(2)}</strong>
-        </span>
-        <span className="font-semibold">
-          Efectivo esperado: ${efectivoEsperado.toFixed(2)}
-        </span>
-      </div>
-    )}
-
-    <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-[#0F1E3D] text-white text-left">
-          <tr>
-            <th className="px-4 py-3">Fecha</th>
-            <th className="px-4 py-3">Total ventas</th>
-            <th className="px-4 py-3">Utilidad</th>
-            <th className="px-4 py-3">Efectivo contado</th>
-            <th className="px-4 py-3">Diferencia</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cargando ? (
-            <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                Cargando...
-              </td>
-            </tr>
-          ) : cortes.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                Sin cortes registrados
-              </td>
-            </tr>
+    <MainLayout titulo="Corte de Caja">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-slate-800">Historial de cortes</h2>
+        {!cargandoApertura &&
+          (apertura ? (
+            <button
+              onClick={abrirModal}
+              className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition mi-boton"
+            >
+              Cerrar caja
+            </button>
           ) : (
-            cortesPagina.map((c) => (
-              <tr
-                key={c.id}
-                onClick={() => setCorteSeleccionado(c)}
-                className="border-t border-slate-300 cursor-pointer hover:bg-[#F1F5F9] transition"
-              >
-                <td className="px-4 py-3 text-slate-600">
-                  {c.fecha ? new Date(c.fecha).toLocaleString("es-MX") : "—"}
-                </td>
-                <td className="px-4 py-3 text-slate-800 font-medium">
-                  ${c.totalVentas.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-green-600">
-                  ${c.totalUtilidad.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  ${c.efectivoContado.toFixed(2)}
-                </td>
-                <td
-                  className={`px-4 py-3 font-medium ${
-                    c.diferencia === 0
-                      ? "text-slate-600"
-                      : c.diferencia > 0
-                        ? "text-blue-600"
-                        : "text-red-600"
-                  }`}
-                >
-                  {c.diferencia > 0 ? "+" : ""}${c.diferencia.toFixed(2)}
+            <span className="text-sm text-slate-400">
+              No hay una caja abierta actualmente
+            </span>
+          ))}
+      </div>
+
+      {apertura && (
+        <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-sm text-blue-800 flex justify-between items-center">
+          <span>
+            Caja abierta desde{' '}
+            <strong>{new Date(apertura.fecha).toLocaleString('es-MX')}</strong> ·
+            Fondo inicial: <strong>${apertura.montoInicial.toFixed(2)}</strong>
+          </span>
+          <span className="font-semibold">
+            Efectivo esperado: ${efectivoEsperado.toFixed(2)}
+          </span>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-[#0F1E3D] text-white text-left">
+            <tr>
+              <th className="px-4 py-3">Fecha</th>
+              <th className="px-4 py-3">Total ventas</th>
+              {esAdmin && <th className="px-4 py-3">Utilidad</th>}
+              <th className="px-4 py-3">Efectivo contado</th>
+              <th className="px-4 py-3">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cargando ? (
+              <tr>
+                <td colSpan={columnas} className="px-4 py-6 text-center text-slate-400">
+                  Cargando...
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : cortes.length === 0 ? (
+              <tr>
+                <td colSpan={columnas} className="px-4 py-6 text-center text-slate-400">
+                  Sin cortes registrados
+                </td>
+              </tr>
+            ) : (
+              cortesPagina.map((c) => (
+                <tr
+                  key={c.id}
+                  onClick={() => setCorteSeleccionado(c)}
+                  className="border-t border-slate-300 cursor-pointer hover:bg-[#F1F5F9] transition"
+                >
+                  <td className="px-4 py-3 text-slate-600">
+                    {c.fecha ? new Date(c.fecha).toLocaleString('es-MX') : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-800 font-medium">
+                    ${c.totalVentas.toFixed(2)}
+                  </td>
+                  {esAdmin && (
+                    <td className="px-4 py-3 text-green-600">
+                      ${c.totalUtilidad.toFixed(2)}
+                    </td>
+                  )}
+                  <td className="px-4 py-3 text-slate-600">
+                    ${c.efectivoContado.toFixed(2)}
+                  </td>
+                  <td
+                    className={`px-4 py-3 font-medium ${
+                      c.diferencia === 0
+                        ? 'text-slate-600'
+                        : c.diferencia > 0
+                          ? 'text-blue-600'
+                          : 'text-red-600'
+                    }`}
+                  >
+                    {c.diferencia > 0 ? '+' : ''}${c.diferencia.toFixed(2)}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
 
-      {!cargando && cortes.length > 0 && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-500 bg-slate-50">
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <span>Mostrar</span>
-            <select
-              value={registrosPorPagina}
-              onChange={(e) =>
-                setRegistrosPorPagina(Number(e.target.value))
-              }
-              className={inputClass}
-            >
-              {[10, 20, 30, 50].map((opcion) => (
-                <option key={opcion} value={opcion}>
-                  {opcion}
-                </option>
-              ))}
-            </select>
-            <span>registros por página</span>
+        {!cargando && cortes.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-500 bg-slate-50">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>Mostrar</span>
+              <select
+                value={registrosPorPagina}
+                onChange={(e) => setRegistrosPorPagina(Number(e.target.value))}
+                className={inputClass}
+              >
+                {[10, 20, 30, 50].map((opcion) => (
+                  <option key={opcion} value={opcion}>
+                    {opcion}
+                  </option>
+                ))}
+              </select>
+              <span>registros por página</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-sm">
+              <button
+                onClick={() => irAPagina(paginaActual - 1)}
+                disabled={paginaActual === 1}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+
+              <span className="px-3 text-slate-600">
+                Página{' '}
+                <span className="font-medium text-slate-800">{paginaActual}</span>{' '}
+                de{' '}
+                <span className="font-medium text-slate-800">{totalPaginas}</span>
+              </span>
+
+              <button
+                onClick={() => irAPagina(paginaActual + 1)}
+                disabled={paginaActual === totalPaginas}
+                className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+
+            <div className="text-sm text-slate-500">
+              Mostrando {indiceInicio + 1}–
+              {Math.min(indiceInicio + registrosPorPagina, cortes.length)} de{' '}
+              {cortes.length}
+            </div>
           </div>
+        )}
+      </div>
 
-          <div className="flex items-center gap-1 text-sm">
-            <button
-              onClick={() => irAPagina(paginaActual - 1)}
-              disabled={paginaActual === 1}
-              className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Anterior
-            </button>
-
-            <span className="px-3 text-slate-600">
-              Página{" "}
-              <span className="font-medium text-slate-800">{paginaActual}</span>{" "}
-              de{" "}
-              <span className="font-medium text-slate-800">{totalPaginas}</span>
-            </span>
-
-            <button
-              onClick={() => irAPagina(paginaActual + 1)}
-              disabled={paginaActual === totalPaginas}
-              className="bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a44c0] transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Siguiente
-            </button>
-          </div>
-
-          <div className="text-sm text-slate-500">
-            Mostrando {indiceInicio + 1}–
-            {Math.min(indiceInicio + registrosPorPagina, cortes.length)} de{" "}
-            {cortes.length}
+      {modalAbierto && apertura && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-1">Cerrar caja</h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Abierta desde {new Date(apertura.fecha).toLocaleString('es-MX')} ·
+              Fondo inicial: ${apertura.montoInicial.toFixed(2)}
+            </p>
+            <div className="bg-slate-50 rounded-lg px-3 py-2 mb-4 text-sm">
+              <span className="text-slate-500">Efectivo esperado en caja: </span>
+              <span className="font-semibold text-slate-800">
+                ${efectivoEsperado.toFixed(2)}
+              </span>
+            </div>
+            <form onSubmit={handleGenerar} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Efectivo contado en caja
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  required
+                  autoFocus
+                  value={efectivoContado}
+                  onChange={(e) => setEfectivoContado(Number(e.target.value))}
+                  className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAbierto(false)}
+                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={generando}
+                  className="px-4 py-2 text-sm bg-[#1D4ED8] text-white rounded-lg hover:bg-[#1a44c0] disabled:opacity-50"
+                >
+                  {generando ? 'Cerrando...' : 'Cerrar caja'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-    </div>
 
-    {modalAbierto && apertura && (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 w-full max-w-sm">
-          <h3 className="text-lg font-semibold mb-1">Cerrar caja</h3>
-          <p className="text-sm text-slate-500 mb-4">
-            Abierta desde {new Date(apertura.fecha).toLocaleString("es-MX")} ·
-            Fondo inicial: ${apertura.montoInicial.toFixed(2)}
-          </p>
-          <div className="bg-slate-50 rounded-lg px-3 py-2 mb-4 text-sm">
-            <span className="text-slate-500">
-              Efectivo esperado en caja:{" "}
-            </span>
-            <span className="font-semibold text-slate-800">
-              ${efectivoEsperado.toFixed(2)}
-            </span>
-          </div>
-          <form onSubmit={handleGenerar} className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Efectivo contado en caja
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                autoFocus
-                value={efectivoContado}
-                onChange={(e) => setEfectivoContado(Number(e.target.value))}
-                className="border border-slate-200 bg-[#E6EDFD] rounded-lg px-3 py-2 text-sm w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8]"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setModalAbierto(false)}
-                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={generando}
-                className="px-4 py-2 text-sm bg-[#1D4ED8] text-white rounded-lg hover:bg-[#1a44c0] disabled:opacity-50"
-              >
-                {generando ? "Cerrando..." : "Cerrar caja"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
-
-    {corteSeleccionado && (
-      <div
-        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-        onClick={() => setCorteSeleccionado(null)}
-      >
+      {corteSeleccionado && (
         <div
-          className="bg-white rounded-xl p-6 w-full max-w-sm"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={() => setCorteSeleccionado(null)}
         >
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-lg font-semibold text-slate-800">
-              Corte #{corteSeleccionado.id}
-            </h3>
-            <button
-              onClick={() => setCorteSeleccionado(null)}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Total ventas</span>
-              <span className="font-medium text-slate-800">
-                ${corteSeleccionado.totalVentas.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Utilidad</span>
-              <span className="font-medium text-green-600">
-                ${corteSeleccionado.totalUtilidad.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Efectivo esperado</span>
-              <span className="font-medium text-slate-800">
-                ${corteSeleccionado.efectivoEsperado.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Efectivo contado</span>
-              <span className="font-medium text-slate-800">
-                ${corteSeleccionado.efectivoContado.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between border-t border-slate-100 pt-2 mt-2">
-              <span className="text-slate-500">Diferencia</span>
-              <span
-                className={`font-bold ${
-                  corteSeleccionado.diferencia === 0
-                    ? "text-slate-800"
-                    : corteSeleccionado.diferencia > 0
-                      ? "text-blue-600"
-                      : "text-red-600"
-                }`}
+          <div
+            className="bg-white rounded-xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">
+                Corte #{corteSeleccionado.id}
+              </h3>
+              <button
+                onClick={() => setCorteSeleccionado(null)}
+                className="text-slate-400 hover:text-slate-600"
               >
-                {corteSeleccionado.diferencia > 0 ? "+" : ""}$
-                {corteSeleccionado.diferencia.toFixed(2)}
-              </span>
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Total ventas</span>
+                <span className="font-medium text-slate-800">
+                  ${corteSeleccionado.totalVentas.toFixed(2)}
+                </span>
+              </div>
+              {esAdmin && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Utilidad</span>
+                  <span className="font-medium text-green-600">
+                    ${corteSeleccionado.totalUtilidad.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-slate-500">Efectivo esperado</span>
+                <span className="font-medium text-slate-800">
+                  ${corteSeleccionado.efectivoEsperado.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Efectivo contado</span>
+                <span className="font-medium text-slate-800">
+                  ${corteSeleccionado.efectivoContado.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-slate-100 pt-2 mt-2">
+                <span className="text-slate-500">Diferencia</span>
+                <span
+                  className={`font-bold ${
+                    corteSeleccionado.diferencia === 0
+                      ? 'text-slate-800'
+                      : corteSeleccionado.diferencia > 0
+                        ? 'text-blue-600'
+                        : 'text-red-600'
+                  }`}
+                >
+                  {corteSeleccionado.diferencia > 0 ? '+' : ''}$
+                  {corteSeleccionado.diferencia.toFixed(2)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
-  </MainLayout>
-);
+      )}
+    </MainLayout>
+  );
 }

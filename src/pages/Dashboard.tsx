@@ -3,42 +3,43 @@ import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { productosApi } from '../api/productos';
 import { ventasApi } from '../api/ventas';
-import { comprasApi } from '../api/compras';
-import { aperturaCajaApi, type AperturaCajaData } from '../api/aperturaCaja';
 import { useAuth } from '../context/AuthContext';
 import { esHoy, topProductosVendidos, utilidadDeVenta, serieUltimosNDias } from '../utils/reportes';
-import type { Producto, Venta, Compra } from '../types';
+import { mensajeDeError } from '../utils/errores';
+import type { Producto, Venta } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const { usuario } = useAuth();
+  const esAdmin = usuario?.rol === 'ADMIN';
+
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
-  const [compras, setCompras] = useState<Compra[]>([]);
-  const [apertura, setApertura] = useState<AperturaCajaData | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
   const [modalStock, setModalStock] = useState<'agotados' | 'poragotarse' | 'todos' | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      productosApi.listarTodos(),
-      ventasApi.listarTodas(),
-      comprasApi.listarTodas(),
-      aperturaCajaApi.obtenerActiva().catch(() => ({ status: 204, data: null })),
-    ]).then(([resProductos, resVentas, resCompras, resApertura]) => {
-      setProductos(resProductos.data);
-      setVentas(resVentas.data);
-      setCompras(resCompras.data);
-      setApertura(resApertura.status === 200 ? resApertura.data : null);
-      setCargando(false);
-    });
+    const cargar = async () => {
+      try {
+        const [resProductos, resVentas] = await Promise.all([
+          productosApi.listarTodos(),
+          ventasApi.listarTodas(),
+        ]);
+        setProductos(resProductos.data);
+        setVentas(resVentas.data);
+      } catch (err) {
+        setError(mensajeDeError(err, 'No se pudo cargar el dashboard.'));
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
   }, []);
 
   const ventasHoy = ventas.filter((v) => esHoy(v.fecha));
-  const comprasHoy = compras.filter((c) => esHoy(c.fecha));
 
   const totalVentasHoy = ventasHoy.reduce((acc, v) => acc + (v.total ?? 0), 0);
-  const totalComprasHoy = comprasHoy.reduce((acc, c) => acc + (c.total ?? 0), 0);
   const utilidadHoy = ventasHoy.reduce((acc, v) => acc + utilidadDeVenta(v), 0);
 
   const agotados = productos.filter((p) => p.stock === 0);
@@ -60,6 +61,8 @@ export default function Dashboard() {
     <MainLayout titulo="Dashboard">
       {cargando ? (
         <p className="text-center text-slate-400 py-12">Cargando...</p>
+      ) : error ? (
+        <p className="text-center text-red-500 py-12">{error}</p>
       ) : (
         <>
           <div className="mb-6">
@@ -67,7 +70,7 @@ export default function Dashboard() {
             <p className="text-slate-500 capitalize">Resumen general de tu negocio hoy · {hoyTexto}</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className={`grid grid-cols-1 gap-4 mb-6 ${esAdmin ? 'lg:grid-cols-2' : ''}`}>
             <CardResumen
               titulo="Ventas del día"
               valor={`$${totalVentasHoy.toFixed(2)}`}
@@ -78,16 +81,18 @@ export default function Dashboard() {
               icono="carrito"
               className="border border-blue-200"
             />
-            <CardResumen
-              titulo="Utilidad del día"
-              valor={`$${utilidadHoy.toFixed(2)}`}
-              delta={deltaUtilidad}
-              comparativo={`vs. ayer $${utilidadAyer.toFixed(2)}`}
-              serie={serieUtilidad}
-              colorFondo="bg-green-50" colorIcono="text-green-600" colorLinea="#059669"
-              icono="dinero"
-              className="border border-green-200"
-            />
+            {esAdmin && (
+              <CardResumen
+                titulo="Utilidad del día"
+                valor={`$${utilidadHoy.toFixed(2)}`}
+                delta={deltaUtilidad}
+                comparativo={`vs. ayer $${utilidadAyer.toFixed(2)}`}
+                serie={serieUtilidad}
+                colorFondo="bg-green-50" colorIcono="text-green-600" colorLinea="#059669"
+                icono="dinero"
+                className="border border-green-200"
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -96,9 +101,11 @@ export default function Dashboard() {
             <CardAlerta titulo="Todos registrados" cantidad={productos.length} colorFondo="bg-blue-50" colorBorde="border-blue-300" colorTexto="text-blue-600" onClick={() => setModalStock('todos')} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className={`grid grid-cols-1 gap-4 mb-6 ${esAdmin ? 'lg:grid-cols-2' : ''}`}>
             <PanelGrafica titulo="Ventas" etiqueta="Ventas totales" total={serieVentas.reduce((a, s) => a + s.valor, 0)} serie={serieVentas} color="#1D4ED8" colorFondo="bg-blue-50" colorBorde="border-blue-300" />
-            <PanelGrafica titulo="Utilidades" etiqueta="Utilidad total" total={serieUtilidad.reduce((a, s) => a + s.valor, 0)} serie={serieUtilidad} color="#059669" colorFondo="bg-green-50" colorBorde="border-green-300" />
+            {esAdmin && (
+              <PanelGrafica titulo="Utilidades" etiqueta="Utilidad total" total={serieUtilidad.reduce((a, s) => a + s.valor, 0)} serie={serieUtilidad} color="#059669" colorFondo="bg-green-50" colorBorde="border-green-300" />
+            )}
           </div>
 
           <div className="bg-white rounded-xl border border-[#0F1E3D] overflow-hidden">
@@ -143,10 +150,10 @@ export default function Dashboard() {
 }
 
 function CardResumen({
-  titulo, valor, delta, comparativo, serie, colorFondo, colorIcono, colorLinea, icono, className = "",
+  titulo, valor, delta, comparativo, serie, colorFondo, colorIcono, colorLinea, icono, className = '',
 }: {
   titulo: string; valor: string; delta: number | null; comparativo: string;
-  serie: { fecha: string; valor: number }[]; colorFondo: string; colorIcono: string; colorLinea: string; icono: 'carrito' | 'dinero'; className: string;
+  serie: { fecha: string; valor: number }[]; colorFondo: string; colorIcono: string; colorLinea: string; icono: 'carrito' | 'dinero'; className?: string;
 }) {
   return (
     <div className={`rounded-xl border p-5 ${colorFondo} ${className}`}>
@@ -209,8 +216,10 @@ function PanelGrafica({ titulo, etiqueta, total, serie, color, colorFondo, color
 
 function CardAlerta({ titulo, cantidad, colorFondo, colorBorde, colorTexto, onClick }: { titulo: string; cantidad: number; colorFondo: string; colorBorde: string; colorTexto: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} 
-    className={`text-left rounded-xl border p-5 ${colorFondo} ${colorBorde} transition-transform duration-200 ease-in-out hover:-translate-y-[3px]`}>
+    <button
+      onClick={onClick}
+      className={`text-left rounded-xl border p-5 ${colorFondo} ${colorBorde} transition-transform duration-200 ease-in-out hover:-translate-y-[3px]`}
+    >
       <p className={`text-sm font-medium ${colorTexto}`}>{titulo}</p>
       <p className="text-3xl font-bold text-slate-800 mt-1">{cantidad}</p>
       <p className="text-xs text-slate-500 mt-1">productos</p>
