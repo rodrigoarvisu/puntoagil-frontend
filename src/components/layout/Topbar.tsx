@@ -6,6 +6,7 @@ import type { Producto } from '../../types';
 import { Store, Key } from 'lucide-react';
 import { useNegocio } from '../../context/NegocioContext';
 import ModalCambiarPassword from './ModalCambiarPassword';
+import AvisoSesion from './AvisoSesion';
 
 
 /* ───────── Notificaciones ───────── */
@@ -338,6 +339,7 @@ export default function Topbar({ titulo }: { titulo: string }) {
       </div>
     </header>
     {passwordAbierto && <ModalCambiarPassword onClose={() => setPasswordAbierto(false)} />}
+   <AvisoSesion />
     </>
   );
 }

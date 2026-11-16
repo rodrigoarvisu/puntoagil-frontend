@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { Usuario } from '../types';
 
 interface AuthContextType {
@@ -6,6 +6,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, usuario: Usuario) => void;
   logout: () => void;
+  actualizarToken: (token: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -32,8 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(null);
   };
 
+  const actualizarToken = (nuevoToken: string) => {
+    localStorage.setItem('token', nuevoToken);
+    setToken(nuevoToken);
+  };
+
   return (
-    <AuthContext.Provider value={{ usuario, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ usuario, token, login, logout, actualizarToken, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );
