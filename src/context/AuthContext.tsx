@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Usuario } from '../types';
 
 interface AuthContextType {
@@ -18,6 +18,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('usuario');
     return stored ? JSON.parse(stored) : null;
   });
+
+  // Mantiene sincronizadas las pestañas abiertas (renovación, cierre de sesión)
+  useEffect(() => {
+    const alCambiar = (e: StorageEvent) => {
+      if (e.key === 'token') setToken(e.newValue);
+      if (e.key === 'usuario') setUsuario(e.newValue ? JSON.parse(e.newValue) : null);
+    };
+    window.addEventListener('storage', alCambiar);
+    return () => window.removeEventListener('storage', alCambiar);
+  }, []);
 
   const login = (nuevoToken: string, nuevoUsuario: Usuario) => {
     localStorage.setItem('token', nuevoToken);
